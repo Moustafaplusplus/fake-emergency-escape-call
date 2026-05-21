@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About — Fake Emergency Escape Call</title>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --warn: #b45309;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, var(--bg) 0%, #e8eef4 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 48px; }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+      border: 1px solid var(--border);
+    }
+    .notice {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin: 20px 0;
+      color: #92400e;
+    }
+    h1 { font-size: 1.75rem; margin: 0 0 8px; font-weight: 700; }
+    .tagline { color: var(--muted); margin-bottom: 24px; }
+    h2 { font-size: 1.1rem; margin: 24px 0 10px; color: var(--accent); }
+    ul { padding-left: 1.25rem; }
+    a { color: var(--accent); }
+    nav { margin-bottom: 20px; font-size: 0.95rem; }
+    nav a { margin-right: 16px; }
+    footer { margin-top: 28px; font-size: 0.85rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <a href="about.html"><strong>About</strong></a>
+      <a href="privacy-policy.html">Privacy Policy</a>
+    </nav>
+    <div class="card">
+      <h1>Fake Emergency Escape Call</h1>
+      <p class="tagline">Schedule simulated incoming calls for reminders, practice, entertainment, or personal exit planning.</p>
+
+      <div class="notice">
+        <strong>Important:</strong> This app schedules <strong>simulated calls only</strong>.
+        It does <strong>not</strong> dial real phone numbers, connect to cellular networks, use VoIP to reach people, or contact emergency services (911, 112, 999, etc.).
+      </div>
+
+      <h2>What this app does</h2>
+      <ul>
+        <li>Lets you schedule a fake incoming call with a custom caller name and spoken message</li>
+        <li>Plays a ringtone and shows an incoming-call style screen at the scheduled time</li>
+        <li>Speaks your script through the phone audio path after you tap Answer (text-to-speech)</li>
+        <li>Stores everything locally on your device — no cloud account required in v1</li>
+      </ul>
+
+      <h2>What this app does not do</h2>
+      <ul>
+        <li>Replace your system Phone or dialer app</li>
+        <li>Call or message real people without your separate action</li>
+        <li>Guarantee delivery on all devices (battery savers and permission settings may delay alarms)</li>
+        <li>Provide legal, medical, or emergency advice</li>
+      </ul>
+
+      <h2>Responsible use</h2>
+      <p>
+        Do not use the App to impersonate law enforcement, emergency services, banks, or others in a deceptive or harmful way.
+        You are responsible for how you use scheduled simulated calls. Misuse may violate local laws or platform policies.
+      </p>
+
+      <h2>Privacy</h2>
+      <p>
+        See our <a href="privacy-policy.html">Privacy Policy</a> for how data is handled (on-device only in v1).
+      </p>
+
+      <h2>Open source</h2>
+      <p>
+        Source code and issue tracker:
+        <a href="https://github.com/moustafaothman/fake-emergency-escape-call">github.com/moustafaothman/fake-emergency-escape-call</a>
+      </p>
+
+      <footer>
+        <p>Android package: <code>com.fakeemergencyescape.call</code></p>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
