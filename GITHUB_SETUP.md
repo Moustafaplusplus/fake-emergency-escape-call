@@ -22,18 +22,23 @@ git add .
 git commit -m "Initial commit: Fake Emergency Escape Call Android app"
 
 git branch -M main
-git remote add origin https://github.com/moustafaothman/fake-emergency-escape-call.git
+git remote add origin https://github.com/Moustafaplusplus/fake-emergency-escape-call.git
+git push -u origin main
+```
+
+If `origin` already exists (wrong URL), fix it first:
+
+```bash
+git remote set-url origin https://github.com/Moustafaplusplus/fake-emergency-escape-call.git
 git push -u origin main
 ```
 
 If you use SSH:
 
 ```bash
-git remote add origin git@github.com:moustafaothman/fake-emergency-escape-call.git
+git remote set-url origin git@github.com:Moustafaplusplus/fake-emergency-escape-call.git
 git push -u origin main
 ```
-
-Replace `moustafaothman` with your GitHub username if different.
 
 ## 3. Enable GitHub Pages
 
@@ -44,8 +49,8 @@ Replace `moustafaothman` with your GitHub username if different.
 
 Your URLs (after deploy):
 
-- About: `https://moustafaothman.github.io/fake-emergency-escape-call/about.html`
-- Privacy: `https://moustafaothman.github.io/fake-emergency-escape-call/privacy-policy.html`
+- About: `https://moustafaplusplus.github.io/fake-emergency-escape-call/about.html`
+- Privacy: `https://moustafaplusplus.github.io/fake-emergency-escape-call/privacy-policy.html`
 
 ## 4. Play Console
 

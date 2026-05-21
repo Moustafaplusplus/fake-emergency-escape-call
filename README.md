@@ -33,4 +33,4 @@ If `./gradlew` fails on Java 25, either install [Temurin 17](https://adoptium.ne
 1. Create repo `fake-emergency-escape-call` on GitHub (see [GITHUB_SETUP.md](./GITHUB_SETUP.md)).
 2. Enable **Pages** from the `/docs` folder on `main`.
 3. Use the privacy URL in Play Console:  
-   `https://moustafaothman.github.io/fake-emergency-escape-call/privacy-policy.html`
+   `https://moustafaplusplus.github.io/fake-emergency-escape-call/privacy-policy.html`
