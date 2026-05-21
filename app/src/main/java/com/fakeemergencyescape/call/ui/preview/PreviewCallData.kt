@@ -1,35 +1,40 @@
 package com.fakeemergencyescape.call.ui.preview
 
-data class PreviewCall(
-    val id: String,
-    val callerName: String,
-    val message: String,
-)
+import com.fakeemergencyescape.call.domain.model.CallStatus
+import com.fakeemergencyescape.call.domain.model.FakeCall
+import com.fakeemergencyescape.call.domain.model.MessageType
 
 object PreviewCallData {
-    const val PREVIEW_ID = "preview"
+    const val INCOMING_ID = "preview_incoming"
+    const val ACTIVE_ID = "preview_active"
 
-    val preview = PreviewCall(
-        id = PREVIEW_ID,
-        callerName = "Alex Morgan",
-        message = "Hey, something came up. Can you step out for a minute?",
-    )
+    fun isPreviewCall(callId: String): Boolean =
+        callId == INCOMING_ID || callId == ACTIVE_ID
 
-    val homeSamples = listOf(
-        PreviewCall("sample-1", "Alex Morgan", "Your next meeting is starting now."),
-        PreviewCall("sample-2", "Jordan Lee", "Can you come back home? I need your help."),
-    )
-
-    fun findById(id: String): PreviewCall = when (id) {
-        PREVIEW_ID -> preview
-        else -> homeSamples.find { it.id == id }
-            ?: preview.copy(id = id, callerName = "Caller")
+    fun findById(callId: String): FakeCall? = when (callId) {
+        INCOMING_ID -> sampleCall(id = INCOMING_ID, status = CallStatus.SCHEDULED)
+        ACTIVE_ID -> sampleCall(id = ACTIVE_ID, status = CallStatus.ANSWERED)
+        else -> null
     }
 
-    fun initials(name: String): String =
-        name.split(" ")
-            .filter { it.isNotBlank() }
-            .take(2)
-            .joinToString("") { it.first().uppercaseChar().toString() }
-            .ifBlank { "?" }
+    private fun sampleCall(id: String, status: CallStatus): FakeCall {
+        val now = System.currentTimeMillis()
+        return FakeCall(
+            id = id,
+            callerName = "Alex Morgan",
+            callerPhotoUri = null,
+            message = "This is a sample message for preview.",
+            messageType = MessageType.TEXT,
+            voiceMessageUri = null,
+            scheduledAtMillis = now,
+            ringtoneUri = null,
+            voiceLocale = "en-US",
+            speechRate = 1f,
+            pitch = 1f,
+            vibrationEnabled = false,
+            status = status,
+            createdAtMillis = now,
+            updatedAtMillis = now,
+        )
+    }
 }

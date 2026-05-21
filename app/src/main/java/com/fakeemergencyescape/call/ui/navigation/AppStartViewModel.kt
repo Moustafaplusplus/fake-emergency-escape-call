@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.fakeemergencyescape.call.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 data class AppStartUiState(
     val isReady: Boolean = false,
@@ -17,15 +19,24 @@ data class AppStartUiState(
 
 @HiltViewModel
 class AppStartViewModel @Inject constructor(
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
-    val uiState: StateFlow<AppStartUiState> = settingsRepository.onboardingCompleted
-        .map { completed ->
-            AppStartUiState(isReady = true, onboardingCompleted = completed)
+
+    private val _uiState = MutableStateFlow(AppStartUiState())
+    val uiState: StateFlow<AppStartUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val onboardingCompleted = settingsRepository.onboardingCompleted.first()
+            delay(SPLASH_MIN_DURATION_MS)
+            _uiState.value = AppStartUiState(
+                isReady = true,
+                onboardingCompleted = onboardingCompleted,
+            )
         }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            AppStartUiState(isReady = false, onboardingCompleted = false),
-        )
+    }
+
+    companion object {
+        const val SPLASH_MIN_DURATION_MS = 1_600L
+    }
 }

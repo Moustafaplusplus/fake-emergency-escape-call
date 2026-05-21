@@ -51,7 +51,7 @@ fun TemplatePickerSheet(
                     Text(
                         text = "${template.category} · ${template.title}",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Text(
                         text = template.message,

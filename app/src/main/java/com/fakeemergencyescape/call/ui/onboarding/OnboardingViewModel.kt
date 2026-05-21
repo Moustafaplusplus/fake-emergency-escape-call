@@ -17,9 +17,8 @@ import kotlinx.coroutines.launch
 
 data class OnboardingUiState(
     val permissions: PermissionStatusState = PermissionStatusState(),
-    val testCallScheduled: Boolean = false,
-    val testCallMessage: String? = null,
-    val isSchedulingTest: Boolean = false,
+    val trialCallScheduled: Boolean = false,
+    val isSchedulingTrial: Boolean = false,
     val errorMessage: String? = null,
 )
 
@@ -68,9 +67,9 @@ class OnboardingViewModel @Inject constructor(
 
     fun openNotificationSettings() = permissionManager.openNotificationSettings()
 
-    fun scheduleTestCall() {
+    fun scheduleTrialCall() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isSchedulingTest = true, errorMessage = null) }
+            _uiState.update { it.copy(isSchedulingTrial = true, errorMessage = null) }
             try {
                 val rate = settingsRepository.ttsSpeechRate.first()
                 val pitch = settingsRepository.ttsPitch.first()
@@ -79,8 +78,8 @@ class OnboardingViewModel @Inject constructor(
                 }
                 val vibration = settingsRepository.defaultVibrationEnabled.first()
                 fakeCallRepository.scheduleCall(
-                    callerName = TEST_CALLER_NAME,
-                    message = TEST_MESSAGE,
+                    callerName = TRIAL_CALLER_NAME,
+                    message = TRIAL_MESSAGE,
                     scheduledAtMillis = System.currentTimeMillis() + 30_000,
                     vibrationEnabled = vibration,
                     vibrateOnly = false,
@@ -90,16 +89,15 @@ class OnboardingViewModel @Inject constructor(
                 )
                 _uiState.update {
                     it.copy(
-                        isSchedulingTest = false,
-                        testCallScheduled = true,
-                        testCallMessage = null,
+                        isSchedulingTrial = false,
+                        trialCallScheduled = true,
                     )
                 }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        isSchedulingTest = false,
-                        errorMessage = e.message ?: "Could not schedule test call",
+                        isSchedulingTrial = false,
+                        errorMessage = e.message ?: "Could not schedule call",
                     )
                 }
             }
@@ -114,7 +112,8 @@ class OnboardingViewModel @Inject constructor(
     }
 
     companion object {
-        const val TEST_CALLER_NAME = "Test Call"
-        const val TEST_MESSAGE = "This is a test of your simulated call. Tap Answer to hear this message."
+        const val TRIAL_CALLER_NAME = "Welcome"
+        const val TRIAL_MESSAGE =
+            "Tap Answer to hear how your message will sound on a scheduled call."
     }
 }

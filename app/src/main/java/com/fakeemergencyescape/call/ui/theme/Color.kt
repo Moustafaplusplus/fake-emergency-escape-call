@@ -9,12 +9,14 @@ val PrimaryAccentLight = Color(0xFF66EEFF) // Light cyan
 val SecondaryAccent = Color(0xFF9D4EDD)    // Purple
 val TertiaryAccent = Color(0xFF3A86FF)     // Electric blue
 
-val AppBackground = Color(0xFFF5F5F7)      // Premium white
-val AppSurface = Color(0xFFFFFFFF)         // Pure white
-val AppSurfaceVariant = Color(0xFFF0F0F4)  // Soft gray
-val AppOnSurface = Color(0xFF1A1A1A)       // Pure black text
-val AppOnSurfaceMuted = Color(0xFF6B6B7D)  // Muted text
-val AppOutline = Color(0xFFD0D0DD)         // Soft border
+val AppBackground = Color(0xFFF4F7FB)      // Soft cool white
+val AppSurface = Color(0xFFFFFFFF)         // Card white
+val AppSurfaceVariant = Color(0xFFE8EDF4)  // Soft gray-blue
+val AppOnBackground = Color(0xFF1C2D42)    // Primary text — deep slate (readable on light BG)
+val AppOnSurface = Color(0xFF243548)       // Body text on cards
+val AppOnSurfaceMuted = Color(0xFF5A6B80)  // Secondary / hint text
+val AppTextAccent = Color(0xFF006B8F)      // Accent labels & links (not bright cyan)
+val AppOutline = Color(0xFFC5D0DE)         // Soft border
 
 val GlassBackground = Color(0x99FFFFFF)    // Glassmorphic white
 val GlassBorder = Color(0x4DFFFFFF)        // Soft glass border

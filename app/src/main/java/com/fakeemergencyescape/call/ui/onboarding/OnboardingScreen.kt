@@ -13,10 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -33,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fakeemergencyescape.call.R
 import com.fakeemergencyescape.call.ui.components.AppScreenBackground
 import com.fakeemergencyescape.call.ui.components.ElevatedAppCard
+import com.fakeemergencyescape.call.ui.components.Primary3DButton
+import com.fakeemergencyescape.call.ui.components.Secondary3DButton
 import com.fakeemergencyescape.call.ui.permissions.PermissionsDashboard
 import androidx.compose.ui.text.font.FontWeight
 
@@ -101,24 +101,18 @@ fun OnboardingScreen(
                 }
             }
 
-            OutlinedButton(
-                onClick = viewModel::scheduleTestCall,
-                enabled = !uiState.isSchedulingTest,
+            Secondary3DButton(
+                text = stringResource(R.string.onboarding_try_call),
+                onClick = viewModel::scheduleTrialCall,
+                enabled = !uiState.isSchedulingTrial,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (uiState.isSchedulingTest) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    }
-                    Text(stringResource(R.string.onboarding_test_call), fontWeight = FontWeight.SemiBold)
-                }
-            }
+            )
 
-            if (uiState.testCallScheduled) {
+            if (uiState.trialCallScheduled) {
                 Text(
-                    text = stringResource(R.string.onboarding_test_call_scheduled),
+                    text = stringResource(R.string.onboarding_try_call_scheduled),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
 
@@ -126,14 +120,13 @@ fun OnboardingScreen(
                 Text(text = msg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
-            Button(
+            Primary3DButton(
+                text = stringResource(R.string.onboarding_continue),
                 onClick = { viewModel.completeOnboarding(onContinue) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 28.dp),
-            ) {
-                Text(stringResource(R.string.onboarding_continue), fontWeight = FontWeight.SemiBold)
-            }
+            )
         }
     }
 }

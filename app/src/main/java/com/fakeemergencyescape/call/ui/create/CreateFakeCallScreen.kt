@@ -15,15 +15,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SnackbarHost
@@ -47,8 +45,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fakeemergencyescape.call.R
 import com.fakeemergencyescape.call.domain.model.MessageType
 import com.fakeemergencyescape.call.ui.components.AppScaffold
+import com.fakeemergencyescape.call.ui.components.Chip3D
 import com.fakeemergencyescape.call.ui.components.ElevatedAppCard
 import com.fakeemergencyescape.call.ui.components.LoadingOverlay
+import com.fakeemergencyescape.call.ui.components.Primary3DButton
+import com.fakeemergencyescape.call.ui.components.Secondary3DButton
 import com.fakeemergencyescape.call.ui.components.ShowMessageSnackbar
 import androidx.compose.ui.text.font.FontWeight
 import java.text.SimpleDateFormat
@@ -170,10 +171,10 @@ fun CreateFakeCallScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         title = {
             Text(
-                if (uiState.isEditMode) {
-                    stringResource(R.string.edit_title)
-                } else {
-                    stringResource(R.string.create_title)
+                when {
+                    uiState.isEditMode -> stringResource(R.string.edit_title)
+                    uiState.isDuplicateMode -> stringResource(R.string.duplicate_title)
+                    else -> stringResource(R.string.create_title)
                 },
                 fontWeight = FontWeight.SemiBold,
             )
@@ -236,13 +237,12 @@ fun CreateFakeCallScreen(
             }
             when (uiState.messageType) {
                 MessageType.TEXT -> {
-                    OutlinedButton(
+                    Secondary3DButton(
+                        text = stringResource(R.string.template_picker_button),
                         onClick = { showTemplateSheet = true },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !uiState.isReadOnly,
-                    ) {
-                        Text(stringResource(R.string.template_picker_button))
-                    }
+                    )
                     OutlinedTextField(
                         value = uiState.message,
                         onValueChange = viewModel::onMessageChange,
@@ -329,27 +329,22 @@ fun CreateFakeCallScreen(
             uiState.errorMessage?.let { error ->
                 Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
-            OutlinedButton(
-                onClick = viewModel::scheduleTestIn30Seconds,
+            Secondary3DButton(
+                text = stringResource(R.string.try_call_30s),
+                onClick = viewModel::scheduleQuickCallIn30Seconds,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState.canSave && !uiState.isLoading && !uiState.isReadOnly,
-            ) {
-                Text(stringResource(R.string.test_call_30s), fontWeight = FontWeight.SemiBold)
-            }
-            Button(
+            )
+            Primary3DButton(
+                text = if (uiState.isEditMode) {
+                    stringResource(R.string.save_changes_button)
+                } else {
+                    stringResource(R.string.schedule_button)
+                },
                 onClick = viewModel::scheduleCall,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState.canSave && !uiState.isLoading && !uiState.isReadOnly,
-            ) {
-                Text(
-                    if (uiState.isEditMode) {
-                        stringResource(R.string.save_changes_button)
-                    } else {
-                        stringResource(R.string.schedule_button)
-                    },
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
+            )
             Spacer(modifier = Modifier.height(20.dp))
         }
         if (uiState.isLoading) {
@@ -361,7 +356,7 @@ fun CreateFakeCallScreen(
 
 @Composable
 private fun ScheduleChip(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    FilterChip(selected = selected, onClick = onClick, enabled = enabled, label = { Text(label) })
+    Chip3D(label = label, selected = selected, enabled = enabled, onClick = onClick)
 }
 
 @Composable

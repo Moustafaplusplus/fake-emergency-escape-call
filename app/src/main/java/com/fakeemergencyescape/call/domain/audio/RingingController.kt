@@ -18,6 +18,7 @@ class RingingController @Inject constructor(
     fun startRinging(call: FakeCall) {
         val intent = Intent(context, FakeCallRingtoneService::class.java).apply {
             putExtra(FakeCallRingtoneService.EXTRA_FAKE_CALL_ID, call.id)
+            putExtra(FakeCallRingtoneService.EXTRA_CALLER_NAME, call.callerName)
         }
         ContextCompat.startForegroundService(context, intent)
     }

@@ -10,15 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.fakeemergencyescape.call.R
+import com.fakeemergencyescape.call.ui.components.IconButton3D
+import com.fakeemergencyescape.call.ui.components.Primary3DButton
+import com.fakeemergencyescape.call.ui.components.Secondary3DButton
 
 @Composable
 fun VoiceMessageSection(
@@ -59,69 +54,57 @@ fun VoiceMessageSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        if (isRecording) {
-            Text(
-                text = stringResource(R.string.voice_recording_elapsed, formatElapsed(recordingElapsedSec)),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Button(
-                onClick = onStopRecording,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = enabled,
-            ) {
-                Icon(Icons.Default.Stop, contentDescription = null)
+        when {
+            isRecording -> {
                 Text(
+                    text = stringResource(R.string.voice_recording_elapsed, formatElapsed(recordingElapsedSec)),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Primary3DButton(
                     text = stringResource(R.string.voice_stop_recording),
-                    modifier = Modifier.padding(start = 8.dp),
+                    onClick = onStopRecording,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = enabled,
                 )
             }
-        } else if (hasRecording) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                FilledTonalButton(
-                    onClick = onTogglePreview,
-                    enabled = enabled,
-                    modifier = Modifier.weight(1f),
+            hasRecording -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Default.VolumeUp, contentDescription = null)
-                    Text(
+                    Secondary3DButton(
                         text = if (isPlayingPreview) {
                             stringResource(R.string.voice_stop_preview)
                         } else {
                             stringResource(R.string.voice_play_preview)
                         },
-                        modifier = Modifier.padding(start = 6.dp),
+                        onClick = onTogglePreview,
+                        enabled = enabled,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton3D(
+                        icon = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.voice_delete_recording),
+                        onClick = onClearRecording,
+                        enabled = enabled,
+                        tint = MaterialTheme.colorScheme.error,
                     )
                 }
-                IconButton(onClick = onClearRecording, enabled = enabled) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.voice_delete_recording))
-                }
-            }
-            OutlinedButton(
-                onClick = { requestRecord() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = enabled,
-            ) {
-                Icon(Icons.Default.Mic, contentDescription = null)
-                Text(
+                Secondary3DButton(
                     text = stringResource(R.string.voice_record_again),
-                    modifier = Modifier.padding(start = 8.dp),
+                    onClick = { requestRecord() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = enabled,
                 )
             }
-        } else {
-            Button(
-                onClick = { requestRecord() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = enabled,
-            ) {
-                Icon(Icons.Default.Mic, contentDescription = null)
-                Text(
+            else -> {
+                Primary3DButton(
                     text = stringResource(R.string.voice_start_recording),
-                    modifier = Modifier.padding(start = 8.dp),
+                    onClick = { requestRecord() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = enabled,
                 )
             }
         }

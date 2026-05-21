@@ -40,4 +40,17 @@ class VoiceMessageStorage @Inject constructor(
 
     fun exists(path: String?): Boolean =
         !path.isNullOrBlank() && File(path).exists() && File(path).length() > 0
+
+    /** Copies an existing recording to a new temp file (for duplicating a call). */
+    fun copyToTempFile(sourcePath: String?): String? {
+        if (!exists(sourcePath)) return null
+        val dest = createTempRecordingFile()
+        return try {
+            File(sourcePath!!).copyTo(dest, overwrite = true)
+            dest.absolutePath
+        } catch (_: Exception) {
+            dest.delete()
+            null
+        }
+    }
 }

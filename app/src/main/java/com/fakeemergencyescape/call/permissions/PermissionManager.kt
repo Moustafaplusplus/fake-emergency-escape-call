@@ -81,18 +81,23 @@ class PermissionManager @Inject constructor(
 
     fun openBatteryOptimizationSettings() {
         val packageUri = Uri.parse("package:${context.packageName}")
-        val requestIntent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = packageUri
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        if (requestIntent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(requestIntent)
-        } else {
-            context.startActivity(
-                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                },
-            )
+        val intents = listOf(
+            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = packageUri
+            },
+            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = packageUri
+            },
+        )
+        for (intent in intents) {
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            try {
+                context.startActivity(intent)
+                return
+            } catch (_: Exception) {
+                // Try next fallback
+            }
         }
     }
 

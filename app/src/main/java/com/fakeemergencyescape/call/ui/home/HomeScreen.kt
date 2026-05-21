@@ -1,28 +1,37 @@
 package com.fakeemergencyescape.call.ui.home
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,19 +47,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fakeemergencyescape.call.BuildConfig
 import com.fakeemergencyescape.call.R
 import com.fakeemergencyescape.call.domain.model.CallStatus
 import com.fakeemergencyescape.call.domain.model.FakeCall
+import com.fakeemergencyescape.call.domain.model.MessageType
 import com.fakeemergencyescape.call.ui.components.AppScreenBackground
 import com.fakeemergencyescape.call.ui.components.ElevatedAppCard
+import com.fakeemergencyescape.call.ui.components.Fab3D
+import com.fakeemergencyescape.call.ui.components.IconButton3D
+import com.fakeemergencyescape.call.ui.components.Primary3DButton
+import com.fakeemergencyescape.call.ui.components.TextButton3D
+import com.fakeemergencyescape.call.ui.components.staggeredEntrance
+import com.fakeemergencyescape.call.ui.theme.CallAnswerGreen
+import com.fakeemergencyescape.call.ui.theme.PrimaryAccent
+import com.fakeemergencyescape.call.ui.theme.PrimaryAccentDark
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,12 +80,14 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onScheduleCall: () -> Unit,
     onEditCall: (String) -> Unit,
-    onSettings: () -> Unit,
+    onDuplicateCall: (String) -> Unit,
+    onCallAppearance: () -> Unit,
+    onActiveCallAppearance: () -> Unit,
     onPreviewIncoming: () -> Unit,
     onPreviewActive: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var menuExpanded by remember { mutableStateOf(false) }
     var callToCancel by remember { mutableStateOf<FakeCall?>(null) }
     var callToDelete by remember { mutableStateOf<FakeCall?>(null) }
 
@@ -125,72 +146,86 @@ fun HomeScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                        actionIconContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
                     actions = {
                         IconButton(onClick = onSettings) {
                             Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.menu_settings))
                         }
-                        if (BuildConfig.DEBUG) {
-                            IconButton(onClick = { menuExpanded = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.menu_debug))
-                            }
-                            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.menu_preview_incoming)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onPreviewIncoming()
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.menu_preview_active)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onPreviewActive()
-                                    },
-                                )
-                            }
-                        }
                     },
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(
+                Fab3D(
+                    icon = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.home_schedule_fab),
                     onClick = onScheduleCall,
-                    shape = CircleShape,
-                    modifier = Modifier.shadow(12.dp, CircleShape),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_schedule_fab))
-                }
+                )
             },
         ) { innerPadding ->
-            if (uiState.isEmpty) {
-                HomeEmptyState(modifier = Modifier.padding(innerPadding))
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        CallCustomizationHomeCard(
+                            title = stringResource(R.string.home_call_appearance_title),
+                            subtitle = stringResource(R.string.home_call_appearance_subtitle),
+                            icon = Icons.Default.Palette,
+                            iconGradient = listOf(PrimaryAccent, PrimaryAccentDark),
+                            onClick = onCallAppearance,
+                            modifier = Modifier.weight(1f),
+                        )
+                        CallCustomizationHomeCard(
+                            title = stringResource(R.string.home_active_appearance_title),
+                            subtitle = stringResource(R.string.home_active_appearance_subtitle),
+                            icon = Icons.Default.PhoneInTalk,
+                            iconGradient = listOf(CallAnswerGreen, CallAnswerGreen.copy(alpha = 0.75f)),
+                            onClick = onActiveCallAppearance,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                item {
+                    CallPreviewHomeCard(
+                        onPreviewIncoming = onPreviewIncoming,
+                        onPreviewActive = onPreviewActive,
+                    )
+                }
+                if (uiState.isEmpty) {
+                    item {
+                        HomeEmptyState(onScheduleCall = onScheduleCall)
+                    }
+                } else {
                     if (uiState.scheduledCalls.isNotEmpty()) {
                         item {
                             Text(
                                 text = stringResource(R.string.section_upcoming),
                                 style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
                             )
                         }
-                        items(uiState.scheduledCalls, key = { it.id }) { call ->
+                        itemsIndexed(uiState.scheduledCalls, key = { _, call -> call.id }) { index, call ->
                             FakeCallCard(
+                                modifier = Modifier.staggeredEntrance(index),
                                 call = call,
                                 statusLabel = viewModel.statusLabel(call.status),
                                 scheduledLabel = formatScheduleTime(call.scheduledAtMillis),
                                 onClick = { onEditCall(call.id) },
+                                onDuplicate = { onDuplicateCall(call.id) },
                                 onCancel = { callToCancel = call },
                                 onDelete = { callToDelete = call },
                                 showCancel = true,
@@ -207,12 +242,19 @@ fun HomeScreen(
                                 modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
                             )
                         }
-                        items(uiState.pastCalls, key = { it.id }) { call ->
+                        itemsIndexed(
+                            uiState.pastCalls,
+                            key = { _, call -> call.id },
+                        ) { index, call ->
                             FakeCallCard(
+                                modifier = Modifier.staggeredEntrance(
+                                    uiState.scheduledCalls.size + index,
+                                ),
                                 call = call,
                                 statusLabel = viewModel.statusLabel(call.status),
                                 scheduledLabel = formatScheduleTime(call.scheduledAtMillis),
-                                onClick = { },
+                                onClick = null,
+                                onDuplicate = { onDuplicateCall(call.id) },
                                 onCancel = { },
                                 onDelete = { callToDelete = call },
                                 showCancel = false,
@@ -226,31 +268,63 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeEmptyState(modifier: Modifier = Modifier) {
+private fun HomeEmptyState(
+    modifier: Modifier = Modifier,
+    onScheduleCall: () -> Unit = {},
+) {
+    val infinite = rememberInfiniteTransition(label = "empty_logo")
+    val logoPulse by infinite.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(tween(1800, easing = LinearEasing), RepeatMode.Reverse),
+        label = "logo_pulse",
+    )
+    val enter = remember { Animatable(0f) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        enter.animateTo(1f, tween(700))
+    }
+
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier.padding(40.dp),
+            modifier = Modifier
+                .padding(40.dp)
+                .graphicsLayer {
+                    alpha = enter.value
+                    translationY = (1f - enter.value) * 40f
+                },
         ) {
             Image(
-                painter = painterResource(R.drawable.ic_splash_logo),
+                painter = painterResource(R.drawable.ic_app_logo),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .shadow(12.dp, CircleShape),
-                contentScale = ContentScale.Fit,
+                    .size(128.dp)
+                    .graphicsLayer {
+                        scaleX = logoPulse
+                        scaleY = logoPulse
+                    }
+                    .shadow(20.dp, RoundedCornerShape(28.dp), spotColor = MaterialTheme.colorScheme.primary.copy(0.35f))
+                    .clip(RoundedCornerShape(28.dp)),
+                contentScale = ContentScale.Crop,
             )
             Text(
                 text = stringResource(R.string.home_empty),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = stringResource(R.string.home_empty_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Primary3DButton(
+                text = stringResource(R.string.home_schedule_fab),
+                onClick = onScheduleCall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
             )
         }
     }
@@ -258,16 +332,22 @@ private fun HomeEmptyState(modifier: Modifier = Modifier) {
 
 @Composable
 private fun FakeCallCard(
+    modifier: Modifier = Modifier,
     call: FakeCall,
     statusLabel: String,
     scheduledLabel: String,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
+    onDuplicate: () -> Unit,
     onCancel: () -> Unit,
     onDelete: () -> Unit,
     showCancel: Boolean,
 ) {
+    val messagePreview = when (call.messageType) {
+        MessageType.VOICE -> stringResource(R.string.message_type_voice)
+        MessageType.TEXT -> call.message
+    }
     ElevatedAppCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick,
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -283,7 +363,7 @@ private fun FakeCallCard(
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        text = call.message,
+                        text = messagePreview,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
@@ -298,25 +378,32 @@ private fun FakeCallCard(
                     Text(
                         text = statusLabel,
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 6.dp),
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (showCancel && call.status == CallStatus.SCHEDULED) {
-                        TextButton(onClick = onCancel) {
-                            Text(stringResource(R.string.cancel_call_action))
-                        }
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.delete_call_action),
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        TextButton3D(
+                            text = stringResource(R.string.cancel_call_action),
+                            onClick = onCancel,
+                            accent = MaterialTheme.colorScheme.error,
                         )
                     }
+                    IconButton3D(
+                        icon = Icons.Default.ContentCopy,
+                        contentDescription = stringResource(R.string.duplicate_call_action),
+                        onClick = onDuplicate,
+                        size = 42.dp,
+                    )
+                    IconButton3D(
+                        icon = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete_call_action),
+                        onClick = onDelete,
+                        tint = MaterialTheme.colorScheme.error,
+                        size = 42.dp,
+                    )
                 }
             }
         }

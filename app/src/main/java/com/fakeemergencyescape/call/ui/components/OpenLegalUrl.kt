@@ -21,6 +21,6 @@ fun OpenLegalUrlButton(
             )
         },
     ) {
-        Text(label, color = MaterialTheme.colorScheme.primary)
+        Text(label, color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }

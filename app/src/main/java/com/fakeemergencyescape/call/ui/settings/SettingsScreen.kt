@@ -200,7 +200,11 @@ private fun SliderSetting(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(label, style = MaterialTheme.typography.bodyLarge)
-            Text(valueLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            Text(
+                valueLabel,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
         }
         Slider(value = value, onValueChange = onValueChange, valueRange = valueRange)
     }

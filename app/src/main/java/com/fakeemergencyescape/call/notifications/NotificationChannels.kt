@@ -18,17 +18,22 @@ class NotificationChannels @Inject constructor(
     fun ensureCreated() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
-        val channel = NotificationChannel(
-            CHANNEL_FAKE_CALL,
-            "Simulated incoming calls",
+        // HIGH importance is required for full-screen intent when the app is in the background
+        // (unlocked phone). Sound/vibration are disabled — the app plays its own ringtone.
+        val ringingChannel = NotificationChannel(
+            CHANNEL_FAKE_CALL_RINGING,
+            "Incoming calls",
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = "Alerts when a scheduled simulated call is ringing"
+            description = "Opens the full-screen call UI when a scheduled call rings."
+            setShowBadge(false)
+            enableVibration(false)
+            setSound(null, null)
         }
-        notificationManager.createNotificationChannel(channel)
+        notificationManager.createNotificationChannel(ringingChannel)
     }
 
     companion object {
-        const val CHANNEL_FAKE_CALL = "fake_call_channel"
+        const val CHANNEL_FAKE_CALL_RINGING = "fake_call_ringing_v3"
     }
 }

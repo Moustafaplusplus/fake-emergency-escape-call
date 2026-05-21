@@ -3,7 +3,12 @@ package com.fakeemergencyescape.call.ui.incoming
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fakeemergencyescape.call.data.repository.ActiveCallAppearanceRepository
+import com.fakeemergencyescape.call.data.repository.CallAppearanceRepository
 import com.fakeemergencyescape.call.data.repository.FakeCallRepository
+import com.fakeemergencyescape.call.domain.model.ActiveCallAppearanceSettings
+import com.fakeemergencyescape.call.domain.model.CallAppearanceSettings
+import com.fakeemergencyescape.call.domain.model.DefaultActiveCallAppearance
 import com.fakeemergencyescape.call.domain.audio.CallAudioRouter
 import com.fakeemergencyescape.call.domain.audio.DeviceAudioHelper
 import com.fakeemergencyescape.call.domain.audio.RingingController
@@ -25,9 +30,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -67,12 +74,20 @@ class IncomingCallViewModel @Inject constructor(
     private val callNotificationManager: CallNotificationManager,
     private val voiceMessagePlayer: VoiceMessagePlayer,
     private val voiceMessageStorage: VoiceMessageStorage,
+    callAppearanceRepository: CallAppearanceRepository,
+    activeCallAppearanceRepository: ActiveCallAppearanceRepository,
 ) : ViewModel() {
 
     private val callId: String = savedStateHandle.get<String>(Routes.ARG_FAKE_CALL_ID).orEmpty()
 
     private val _uiState = MutableStateFlow(IncomingCallUiState(callId = callId))
     val uiState: StateFlow<IncomingCallUiState> = _uiState.asStateFlow()
+
+    val callAppearance: StateFlow<CallAppearanceSettings> = callAppearanceRepository.settings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CallAppearanceSettings())
+
+    val activeCallAppearance: StateFlow<ActiveCallAppearanceSettings> = activeCallAppearanceRepository.settings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DefaultActiveCallAppearance)
 
     private val _finish = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val finish: SharedFlow<Unit> = _finish.asSharedFlow()
@@ -82,26 +97,28 @@ class IncomingCallViewModel @Inject constructor(
     private var durationJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            val fromDb = repository.getById(callId)
-            activeCall = fromDb
-            val preview = PreviewCallData.findById(callId)
-            val name = fromDb?.callerName ?: preview.callerName
-            val message = fromDb?.message ?: preview.message
-            _uiState.update {
-                it.copy(
-                    callerName = name,
-                    message = message,
-                    isLoading = false,
-                    showNoEarpieceHint = !deviceAudioHelper.hasEarpiece(),
-                )
-            }
-            if (fromDb?.status == CallStatus.ANSWERED) {
-                startActiveCall(speakDelayMs = 0)
+        if (PreviewCallData.isPreviewCall(callId)) {
+            viewModelScope.launch { loadPreviewCall() }
+        } else {
+            viewModelScope.launch {
+                val fromDb = repository.getById(callId)
+                activeCall = fromDb
+                _uiState.update {
+                    it.copy(
+                        callerName = fromDb?.callerName.orEmpty(),
+                        message = fromDb?.message.orEmpty(),
+                        isLoading = false,
+                        showNoEarpieceHint = !deviceAudioHelper.hasEarpiece(),
+                    )
+                }
+                if (fromDb?.status == CallStatus.ANSWERED) {
+                    startActiveCall(speakDelayMs = 0)
+                }
             }
         }
 
         viewModelScope.launch {
+            if (PreviewCallData.isPreviewCall(callId)) return@launch
             repository.observeCall(callId).collect { call ->
                 when (call?.status) {
                     CallStatus.MISSED,
@@ -142,32 +159,14 @@ class IncomingCallViewModel @Inject constructor(
         viewModelScope.launch {
             ringingController.stopRinging()
             callNotificationManager.dismissIncomingNotification()
-            if (callId.isNotBlank() && !isPreviewCall()) {
+            if (isPreviewCall()) {
+                activeCall = PreviewCallData.findById(callId)
+                startActiveCall(speakDelayMs = 800)
+                return@launch
+            }
+            if (callId.isNotBlank()) {
                 repository.answerCall(callId)
                 activeCall = repository.getById(callId)
-            } else {
-                activeCall = activeCall?.copy(
-                    callerName = _uiState.value.callerName,
-                    message = _uiState.value.message,
-                ) ?: PreviewCallData.findById(callId).let {
-                    FakeCall(
-                        id = callId,
-                        callerName = it.callerName,
-                        callerPhotoUri = null,
-                        message = it.message,
-                        messageType = MessageType.TEXT,
-                        voiceMessageUri = null,
-                        scheduledAtMillis = 0,
-                        ringtoneUri = null,
-                        voiceLocale = Locale.getDefault().toLanguageTag(),
-                        speechRate = 1f,
-                        pitch = 1f,
-                        vibrationEnabled = true,
-                        status = CallStatus.ANSWERED,
-                        createdAtMillis = 0,
-                        updatedAtMillis = 0,
-                    )
-                }
             }
             startActiveCall(speakDelayMs = 800)
         }
@@ -178,7 +177,11 @@ class IncomingCallViewModel @Inject constructor(
             stopActiveAudio()
             ringingController.stopRinging()
             callNotificationManager.dismissIncomingNotification()
-            if (callId.isNotBlank() && !isPreviewCall()) {
+            if (isPreviewCall()) {
+                _finish.tryEmit(Unit)
+                return@launch
+            }
+            if (callId.isNotBlank()) {
                 repository.declineCall(callId)
             }
             _finish.tryEmit(Unit)
@@ -209,42 +212,34 @@ class IncomingCallViewModel @Inject constructor(
         replayMessage()
     }
 
-    /** Used by debug "Preview active call" — opens directly on the in-call UI. */
-    fun showActivePreview() {
-        if (!isPreviewCall() || _uiState.value.screen == IncomingScreen.ACTIVE) return
-        viewModelScope.launch {
-            val preview = PreviewCallData.findById(callId)
-            activeCall = FakeCall(
-                id = callId,
-                callerName = _uiState.value.callerName.ifBlank { preview.callerName },
-                callerPhotoUri = null,
-                message = _uiState.value.message.ifBlank { preview.message },
-                messageType = MessageType.TEXT,
-                voiceMessageUri = null,
-                scheduledAtMillis = 0,
-                ringtoneUri = null,
-                voiceLocale = Locale.getDefault().toLanguageTag(),
-                speechRate = 1f,
-                pitch = 1f,
-                vibrationEnabled = true,
-                status = CallStatus.ANSWERED,
-                createdAtMillis = 0,
-                updatedAtMillis = 0,
-            )
-            startActiveCall(speakDelayMs = 0)
-        }
-    }
-
     fun onEndCall() {
         viewModelScope.launch {
             stopActiveAudio()
             callNotificationManager.dismissIncomingNotification()
-            if (callId.isNotBlank() && !isPreviewCall()) {
+            if (!isPreviewCall() && callId.isNotBlank()) {
                 repository.completeCall(callId)
             }
             _finish.tryEmit(Unit)
         }
     }
+
+    private suspend fun loadPreviewCall() {
+        val preview = PreviewCallData.findById(callId) ?: return
+        activeCall = preview
+        _uiState.update {
+            it.copy(
+                callerName = preview.callerName,
+                message = preview.message,
+                isLoading = false,
+                showNoEarpieceHint = !deviceAudioHelper.hasEarpiece(),
+            )
+        }
+        if (callId == PreviewCallData.ACTIVE_ID) {
+            startActiveCall(speakDelayMs = 0)
+        }
+    }
+
+    private fun isPreviewCall(): Boolean = PreviewCallData.isPreviewCall(callId)
 
     private fun startActiveCall(speakDelayMs: Long) {
         callAudioRouter.enterCallMode(speakerOn = false)
@@ -349,9 +344,6 @@ class IncomingCallViewModel @Inject constructor(
             else -> Locale.forLanguageTag(tag)
         }
     }
-
-    private fun isPreviewCall(): Boolean =
-        callId == PreviewCallData.PREVIEW_ID || callId.startsWith("sample-")
 
     override fun onCleared() {
         stopActiveAudio()

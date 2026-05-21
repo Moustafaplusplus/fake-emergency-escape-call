@@ -114,7 +114,7 @@ class SettingsViewModel @Inject constructor(
                     return@initialize
                 }
                 textToSpeechManager.speak(
-                    text = "This is a preview of your simulated call voice.",
+                    text = "This is how your message will sound when you answer a call.",
                     locale = localeFromTag(state.localeTag),
                     rate = state.speechRate,
                     pitch = state.speechPitch,

@@ -1,19 +1,16 @@
 package com.fakeemergencyescape.call.service
 
-import android.app.ActivityManager
 import android.app.Service
 import android.content.Intent
 import android.net.Uri
+import android.os.PowerManager
 import android.util.Log
 import com.fakeemergencyescape.call.data.repository.FakeCallRepository
 import com.fakeemergencyescape.call.domain.audio.RingtonePlayer
 import com.fakeemergencyescape.call.domain.audio.VibrationPlayer
 import com.fakeemergencyescape.call.domain.model.CallStatus
 import com.fakeemergencyescape.call.domain.scheduler.AlarmConstants
-import com.fakeemergencyescape.call.navigation.Routes
 import com.fakeemergencyescape.call.notifications.CallNotificationManager
-import com.fakeemergencyescape.call.permissions.PermissionManager
-import com.fakeemergencyescape.call.ui.incoming.IncomingCallActivity
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -33,8 +30,6 @@ class FakeCallRingtoneService : Service() {
     @Inject lateinit var ringtonePlayer: RingtonePlayer
     @Inject lateinit var vibrationPlayer: VibrationPlayer
     @Inject lateinit var callNotificationManager: CallNotificationManager
-    @Inject lateinit var permissionManager: PermissionManager
-
     override fun onBind(intent: Intent?) = null
 
     private var timeoutJob: Job? = null
@@ -47,10 +42,20 @@ class FakeCallRingtoneService : Service() {
         }
 
         val callId = intent?.getStringExtra(EXTRA_FAKE_CALL_ID)
+        val callerName = intent?.getStringExtra(EXTRA_CALLER_NAME) ?: ""
+        
         if (callId.isNullOrBlank()) {
             stopSelf()
             return START_NOT_STICKY
         }
+
+        // Fix: Call startForeground immediately to avoid ForegroundServiceDidNotStartInTimeException
+        val initialNotification = callNotificationManager.buildRingingServiceNotification(callId, callerName)
+        startForeground(CallNotificationManager.RINGING_NOTIFICATION_ID, initialNotification)
+
+        wakeScreenForIncomingCall()
+        callNotificationManager.postRingingNotification(callId, callerName)
+        callNotificationManager.launchIncomingCallUi(this, callId)
 
         activeCallId = callId
         serviceScope.launch {
@@ -61,8 +66,10 @@ class FakeCallRingtoneService : Service() {
                 return@launch
             }
 
-            val notification = callNotificationManager.buildRingingNotification(call)
+            // Update notification with full call details if needed (callerName might have changed or was empty)
+            val notification = callNotificationManager.buildRingingServiceNotification(call)
             startForeground(CallNotificationManager.RINGING_NOTIFICATION_ID, notification)
+            callNotificationManager.postRingingNotification(call)
 
             val vibrateOnly = call.ringtoneUri == FakeCallRepository.VIBRATE_ONLY_URI
             if (!vibrateOnly) {
@@ -73,7 +80,6 @@ class FakeCallRingtoneService : Service() {
                 vibrationPlayer.start()
             }
 
-            maybeLaunchIncomingUi(callId)
             startMissedTimeout(callId)
 
             Log.i(AlarmConstants.LOG_TAG, "Ring service started for $callId vibrateOnly=$vibrateOnly")
@@ -95,30 +101,18 @@ class FakeCallRingtoneService : Service() {
         }
     }
 
-    private fun maybeLaunchIncomingUi(callId: String) {
-        if (permissionManager.canUseFullScreenIntent() && !isAppInForeground()) {
-            return
+    private fun wakeScreenForIncomingCall() {
+        val powerManager = getSystemService(PowerManager::class.java) ?: return
+        try {
+            @Suppress("DEPRECATION")
+            val wakeLock = powerManager.newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                "FakeEscapeCall:incoming",
+            )
+            wakeLock.acquire(20_000L)
+        } catch (e: Exception) {
+            Log.w(AlarmConstants.LOG_TAG, "Wake screen for incoming call failed", e)
         }
-        launchIncomingCallActivity(callId)
-    }
-
-    private fun isAppInForeground(): Boolean {
-        val processes = getSystemService(ActivityManager::class.java).runningAppProcesses
-            ?: return false
-        return processes.any {
-            it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND &&
-                it.processName == packageName
-        }
-    }
-
-    private fun launchIncomingCallActivity(callId: String) {
-        val activityIntent = Intent(this, IncomingCallActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra(Routes.ARG_FAKE_CALL_ID, callId)
-        }
-        startActivity(activityIntent)
     }
 
     private fun stopRingingAndSelf() {
@@ -141,6 +135,7 @@ class FakeCallRingtoneService : Service() {
 
     companion object {
         const val EXTRA_FAKE_CALL_ID = AlarmConstants.EXTRA_FAKE_CALL_ID
+        const val EXTRA_CALLER_NAME = "com.fakeemergencyescape.call.EXTRA_CALLER_NAME"
         const val ACTION_STOP = "com.fakeemergencyescape.call.ACTION_STOP_RING"
         private const val RING_TIMEOUT_MS = 45_000L
     }

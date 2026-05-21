@@ -7,6 +7,7 @@ import android.util.Log
 import com.fakeemergencyescape.call.data.repository.FakeCallRepository
 import com.fakeemergencyescape.call.domain.audio.RingingController
 import com.fakeemergencyescape.call.domain.scheduler.AlarmConstants
+import com.fakeemergencyescape.call.notifications.CallNotificationManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +20,7 @@ class FakeCallAlarmReceiver : BroadcastReceiver() {
 
     @Inject lateinit var repository: FakeCallRepository
     @Inject lateinit var ringingController: RingingController
+    @Inject lateinit var callNotificationManager: CallNotificationManager
 
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != AlarmConstants.ACTION_FAKE_CALL_ALARM) return
@@ -28,6 +30,9 @@ class FakeCallAlarmReceiver : BroadcastReceiver() {
             Log.e(AlarmConstants.LOG_TAG, "Alarm received without fakeCallId")
             return
         }
+
+        // Launch while the system is still delivering the alarm PendingIntent.
+        callNotificationManager.launchIncomingCallUi(context, callId)
 
         val pendingResult = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

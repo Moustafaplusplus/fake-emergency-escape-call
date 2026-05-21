@@ -1,6 +1,7 @@
 package com.fakeemergencyescape.call.ui.incoming
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -24,6 +25,19 @@ class IncomingCallActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_AUTO_ANSWER = "autoAnswer"
+        const val EXTRA_DISMISS_TO_HOME = "dismissToHome"
+
+        fun createLaunchIntent(
+            context: android.content.Context,
+            callId: String,
+            autoAnswer: Boolean = false,
+            dismissToHome: Boolean = true,
+        ): Intent = Intent(context, IncomingCallActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(Routes.ARG_FAKE_CALL_ID, callId)
+            putExtra(EXTRA_AUTO_ANSWER, autoAnswer)
+            putExtra(EXTRA_DISMISS_TO_HOME, dismissToHome)
+        }
     }
 
     private val viewModel: IncomingCallViewModel by viewModels()
@@ -37,7 +51,17 @@ class IncomingCallActivity : ComponentActivity() {
             return
         }
 
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
+        @Suppress("DEPRECATION")
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
+        )
 
         // Back press = Decline (same as tapping Decline).
         onBackPressedDispatcher.addCallback(this) {
@@ -55,7 +79,7 @@ class IncomingCallActivity : ComponentActivity() {
             var didAutoAnswer by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
-                viewModel.finish.collect { finish() }
+                viewModel.finish.collect { dismissCallUi() }
             }
 
             LaunchedEffect(uiState.isLoading, uiState.screen, autoAnswer) {
@@ -74,13 +98,16 @@ class IncomingCallActivity : ComponentActivity() {
                 if (!uiState.isLoading) {
                     when (uiState.screen) {
                         IncomingScreen.INCOMING -> {
+                            val appearance by viewModel.callAppearance.collectAsStateWithLifecycle()
                             IncomingCallScreen(
                                 callerName = uiState.callerName,
                                 onAnswer = viewModel::onAnswer,
                                 onDecline = viewModel::onDecline,
+                                appearance = appearance,
                             )
                         }
                         IncomingScreen.ACTIVE -> {
+                            val activeAppearance by viewModel.activeCallAppearance.collectAsStateWithLifecycle()
                             ActiveCallScreen(
                                 callerName = uiState.callerName,
                                 callDurationFormatted = uiState.formattedCallDuration(),
@@ -93,6 +120,7 @@ class IncomingCallActivity : ComponentActivity() {
                                 onToggleMute = viewModel::onToggleMute,
                                 onReplay = viewModel::onReplay,
                                 onEndCall = viewModel::onEndCall,
+                                appearance = activeAppearance,
                             )
                         }
                     }
@@ -104,5 +132,17 @@ class IncomingCallActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+    }
+
+    private fun dismissCallUi() {
+        finish()
+        if (intent.getBooleanExtra(EXTRA_DISMISS_TO_HOME, true)) {
+            startActivity(
+                Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                },
+            )
+        }
     }
 }

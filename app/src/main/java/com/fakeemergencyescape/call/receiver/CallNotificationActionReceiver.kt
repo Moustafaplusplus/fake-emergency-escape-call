@@ -7,10 +7,8 @@ import android.util.Log
 import com.fakeemergencyescape.call.data.repository.FakeCallRepository
 import com.fakeemergencyescape.call.domain.audio.RingingController
 import com.fakeemergencyescape.call.domain.scheduler.AlarmConstants
-import com.fakeemergencyescape.call.navigation.Routes
 import com.fakeemergencyescape.call.notifications.CallNotificationActions
 import com.fakeemergencyescape.call.notifications.CallNotificationManager
-import com.fakeemergencyescape.call.ui.incoming.IncomingCallActivity
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -48,14 +46,7 @@ class CallNotificationActionReceiver : BroadcastReceiver() {
     private fun handleAnswer(context: Context, callId: String) {
         ringingController.stopRinging()
         callNotificationManager.dismissIncomingNotification()
-        val activityIntent = Intent(context, IncomingCallActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra(Routes.ARG_FAKE_CALL_ID, callId)
-            putExtra(IncomingCallActivity.EXTRA_AUTO_ANSWER, true)
-        }
-        context.startActivity(activityIntent)
+        callNotificationManager.launchIncomingCallUi(context, callId, autoAnswer = true)
     }
 
     private suspend fun handleDecline(callId: String) {

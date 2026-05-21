@@ -39,6 +39,7 @@ data class CreateFakeCallUiState(
     val vibrationEnabled: Boolean = true,
     val vibrateOnly: Boolean = false,
     val isEditMode: Boolean = false,
+    val isDuplicateMode: Boolean = false,
     val isLoading: Boolean = false,
     val canSave: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -59,10 +60,12 @@ class CreateFakeCallViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val editCallId: String? = savedStateHandle.get<String>(Routes.ARG_FAKE_CALL_ID)
+    private val duplicateSourceId: String? = savedStateHandle.get<String>(Routes.ARG_SOURCE_CALL_ID)
 
     private val _uiState = MutableStateFlow(
         CreateFakeCallUiState(
             isEditMode = editCallId != null,
+            isDuplicateMode = duplicateSourceId != null,
             exactAlarmsAllowed = repository.canScheduleExactAlarms(),
         ),
     )
@@ -101,6 +104,51 @@ class CreateFakeCallViewModel @Inject constructor(
                             ) && call.callerName.isNotBlank(),
                             errorMessage = if (readOnly) {
                                 "This call is ringing — wait until it ends before editing."
+                            } else {
+                                null
+                            },
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Call not found") }
+                }
+            }
+            duplicateSourceId?.let { id ->
+                _uiState.update { it.copy(isLoading = true) }
+                val call = repository.getById(id)
+                if (call != null) {
+                    val messageText = when (call.messageType) {
+                        MessageType.TEXT -> call.message
+                        MessageType.VOICE -> ""
+                    }
+                    val voicePath = if (call.messageType == MessageType.VOICE) {
+                        voiceMessageStorage.copyToTempFile(call.voiceMessageUri)
+                    } else {
+                        null
+                    }
+                    _uiState.update {
+                        it.copy(
+                            callerName = call.callerName,
+                            message = messageText,
+                            messageType = call.messageType,
+                            voiceMessagePath = voicePath,
+                            scheduleOption = ScheduleOption.MIN_5,
+                            customTimeMillis = ScheduleTime.toMillis(
+                                ScheduleOption.MIN_5,
+                                System.currentTimeMillis(),
+                            ),
+                            vibrationEnabled = call.vibrationEnabled,
+                            vibrateOnly = call.ringtoneUri == VIBRATE_ONLY_URI,
+                            isLoading = false,
+                            isDuplicateMode = true,
+                            isEditMode = false,
+                            canSave = call.callerName.isNotBlank() && hasValidMessage(
+                                call.messageType,
+                                messageText,
+                                voicePath,
+                            ),
+                            snackbarMessage = if (call.messageType == MessageType.VOICE && voicePath == null) {
+                                DUPLICATE_VOICE_COPY_FAILED
                             } else {
                                 null
                             },
@@ -202,7 +250,7 @@ class CreateFakeCallViewModel @Inject constructor(
     fun clearSaveSuccess() = _uiState.update { it.copy(saveSuccess = false) }
     fun clearSnackbarMessage() = _uiState.update { it.copy(snackbarMessage = null) }
 
-    fun scheduleTestIn30Seconds() {
+    fun scheduleQuickCallIn30Seconds() {
         val state = _uiState.value
         if (!isFormValid(state)) {
             _uiState.update { it.copy(errorMessage = validationError(state)) }
@@ -215,7 +263,7 @@ class CreateFakeCallViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false, saveSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = e.message ?: "Could not schedule test call")
+                    it.copy(isLoading = false, errorMessage = e.message ?: "Could not schedule call")
                 }
             }
         }
@@ -317,5 +365,7 @@ class CreateFakeCallViewModel @Inject constructor(
 
     companion object {
         const val VOICE_MESSAGE_LABEL = "Voice message"
+        const val DUPLICATE_VOICE_COPY_FAILED =
+            "Could not copy voice recording — record again or use text"
     }
 }

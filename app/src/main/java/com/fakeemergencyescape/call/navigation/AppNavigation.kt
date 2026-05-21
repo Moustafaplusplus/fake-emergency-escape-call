@@ -14,6 +14,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fakeemergencyescape.call.ui.active.ActiveCallScreen
+import com.fakeemergencyescape.call.ui.activecallappearance.ActiveCallAppearanceEditorScreen
+import com.fakeemergencyescape.call.ui.callappearance.CallAppearanceEditorScreen
 import com.fakeemergencyescape.call.ui.create.CreateFakeCallScreen
 import com.fakeemergencyescape.call.ui.create.CreateFakeCallViewModel
 import com.fakeemergencyescape.call.ui.home.HomeScreen
@@ -22,17 +24,15 @@ import com.fakeemergencyescape.call.ui.incoming.IncomingCallScreen
 import com.fakeemergencyescape.call.ui.incoming.IncomingCallViewModel
 import com.fakeemergencyescape.call.ui.incoming.IncomingScreen
 import com.fakeemergencyescape.call.ui.incoming.formattedCallDuration
-import com.fakeemergencyescape.call.ui.components.AppScreenBackground
-import com.fakeemergencyescape.call.ui.components.CallScreenBackground
+import com.fakeemergencyescape.call.ui.theme.CallScreenTheme
+import com.fakeemergencyescape.call.ui.splash.AnimatedSplashScreen
 import com.fakeemergencyescape.call.ui.navigation.AppStartViewModel
 import com.fakeemergencyescape.call.ui.onboarding.OnboardingScreen
-import com.fakeemergencyescape.call.ui.preview.PreviewCallData
 import com.fakeemergencyescape.call.ui.settings.AboutScreen
 import com.fakeemergencyescape.call.ui.settings.PrivacyScreen
 import com.fakeemergencyescape.call.ui.settings.SettingsScreen
 import com.fakeemergencyescape.call.ui.settings.TermsScreen
 import com.fakeemergencyescape.call.ui.settings.SettingsViewModel
-import com.fakeemergencyescape.call.ui.theme.CallScreenTheme
 
 @Composable
 fun AppNavigation() {
@@ -41,9 +41,7 @@ fun AppNavigation() {
     val startState by appStartViewModel.uiState.collectAsStateWithLifecycle()
 
     if (!startState.isReady) {
-        AppScreenBackground {
-            Box(modifier = Modifier.fillMaxSize())
-        }
+        AnimatedSplashScreen()
         return
     }
 
@@ -59,13 +57,12 @@ fun AppNavigation() {
                 viewModel = viewModel,
                 onScheduleCall = { navController.navigate(Routes.CREATE) },
                 onEditCall = { id -> navController.navigate(Routes.edit(id)) },
+                onDuplicateCall = { id -> navController.navigate(Routes.duplicate(id)) },
+                onCallAppearance = { navController.navigate(Routes.CALL_APPEARANCE) },
+                onActiveCallAppearance = { navController.navigate(Routes.ACTIVE_CALL_APPEARANCE) },
+                onPreviewIncoming = { navController.navigate(Routes.previewIncoming()) },
+                onPreviewActive = { navController.navigate(Routes.previewActive()) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
-                onPreviewIncoming = {
-                    navController.navigate(Routes.incoming(PreviewCallData.PREVIEW_ID))
-                },
-                onPreviewActive = {
-                    navController.navigate(Routes.active(PreviewCallData.PREVIEW_ID))
-                },
             )
         }
 
@@ -90,6 +87,18 @@ fun AppNavigation() {
             )
         }
 
+        composable(
+            route = Routes.DUPLICATE,
+            arguments = listOf(navArgument(Routes.ARG_SOURCE_CALL_ID) { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val viewModel: CreateFakeCallViewModel = hiltViewModel(backStackEntry)
+            CreateFakeCallScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onScheduled = { navController.popBackStack() },
+            )
+        }
+
         composable(Routes.SETTINGS) {
             val settingsViewModel: SettingsViewModel = hiltViewModel()
             SettingsScreen(
@@ -99,6 +108,14 @@ fun AppNavigation() {
                 onPrivacy = { navController.navigate(Routes.PRIVACY) },
                 onTerms = { navController.navigate(Routes.TERMS) },
             )
+        }
+
+        composable(Routes.CALL_APPEARANCE) {
+            CallAppearanceEditorScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.ACTIVE_CALL_APPEARANCE) {
+            ActiveCallAppearanceEditorScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.ABOUT) {
@@ -127,22 +144,30 @@ fun AppNavigation() {
             route = Routes.INCOMING,
             arguments = listOf(navArgument(Routes.ARG_FAKE_CALL_ID) { type = NavType.StringType }),
         ) { backStackEntry ->
-            val callId = backStackEntry.arguments?.getString(Routes.ARG_FAKE_CALL_ID).orEmpty()
             val incomingViewModel: IncomingCallViewModel = hiltViewModel(backStackEntry)
             val incomingState by incomingViewModel.uiState.collectAsStateWithLifecycle()
-            if (!incomingState.isLoading) {
-                when (incomingState.screen) {
-                    IncomingScreen.INCOMING -> {
-                        IncomingCallScreen(
-                            callerName = incomingState.callerName,
-                            onAnswer = incomingViewModel::onAnswer,
-                            onDecline = {
-                                incomingViewModel.onDecline()
-                                navController.popBackStack()
-                            },
-                        )
-                    }
+
+            LaunchedEffect(incomingViewModel) {
+                incomingViewModel.finish.collect {
+                    navController.popBackStack()
+                }
+            }
+
+            CallScreenTheme {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (!incomingState.isLoading) {
+                        when (incomingState.screen) {
+                            IncomingScreen.INCOMING -> {
+                                val appearance by incomingViewModel.callAppearance.collectAsStateWithLifecycle()
+                                IncomingCallScreen(
+                                    callerName = incomingState.callerName,
+                                    onAnswer = incomingViewModel::onAnswer,
+                                    onDecline = incomingViewModel::onDecline,
+                                    appearance = appearance,
+                                )
+                            }
                     IncomingScreen.ACTIVE -> {
+                        val activeAppearance by incomingViewModel.activeCallAppearance.collectAsStateWithLifecycle()
                         ActiveCallScreen(
                             callerName = incomingState.callerName,
                             callDurationFormatted = incomingState.formattedCallDuration(),
@@ -154,52 +179,10 @@ fun AppNavigation() {
                             onToggleSpeaker = incomingViewModel::onToggleSpeaker,
                             onToggleMute = incomingViewModel::onToggleMute,
                             onReplay = incomingViewModel::onReplay,
-                            onEndCall = {
-                                incomingViewModel.onEndCall()
-                                navController.popBackStack(Routes.HOME, inclusive = false)
-                            },
+                            onEndCall = incomingViewModel::onEndCall,
+                            appearance = activeAppearance,
                         )
                     }
-                }
-            }
-        }
-
-        composable(
-            route = Routes.ACTIVE,
-            arguments = listOf(navArgument(Routes.ARG_FAKE_CALL_ID) { type = NavType.StringType }),
-        ) { backStackEntry ->
-            val activeViewModel: IncomingCallViewModel = hiltViewModel(backStackEntry)
-            val activeState by activeViewModel.uiState.collectAsStateWithLifecycle()
-
-            LaunchedEffect(activeState.isLoading) {
-                if (!activeState.isLoading) {
-                    activeViewModel.showActivePreview()
-                }
-            }
-
-            when {
-                !activeState.isLoading && activeState.screen == IncomingScreen.ACTIVE -> {
-                ActiveCallScreen(
-                    callerName = activeState.callerName,
-                    callDurationFormatted = activeState.formattedCallDuration(),
-                    speakerOn = activeState.speakerOn,
-                    muted = activeState.muted,
-                    showNoEarpieceHint = activeState.showNoEarpieceHint,
-                    ttsError = activeState.ttsError,
-                    isSpeaking = activeState.isSpeaking,
-                    onToggleSpeaker = activeViewModel::onToggleSpeaker,
-                    onToggleMute = activeViewModel::onToggleMute,
-                    onReplay = activeViewModel::onReplay,
-                    onEndCall = {
-                        activeViewModel.onEndCall()
-                        navController.popBackStack(Routes.HOME, inclusive = false)
-                    },
-                )
-                }
-                else -> {
-                    CallScreenTheme {
-                        CallScreenBackground {
-                            Box(modifier = Modifier.fillMaxSize())
                         }
                     }
                 }
