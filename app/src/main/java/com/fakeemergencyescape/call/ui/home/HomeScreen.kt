@@ -45,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fakeemergencyescape.call.BuildConfig
 import com.fakeemergencyescape.call.R
 import com.fakeemergencyescape.call.domain.model.CallStatus
 import com.fakeemergencyescape.call.domain.model.FakeCall
@@ -129,24 +130,26 @@ fun HomeScreen(
                         IconButton(onClick = onSettings) {
                             Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.menu_settings))
                         }
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.menu_debug))
-                        }
-                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.menu_preview_incoming)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onPreviewIncoming()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.menu_preview_active)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onPreviewActive()
-                                },
-                            )
+                        if (BuildConfig.DEBUG) {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.menu_debug))
+                            }
+                            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.menu_preview_incoming)) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onPreviewIncoming()
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.menu_preview_active)) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onPreviewActive()
+                                    },
+                                )
+                            }
                         }
                     },
                 )

@@ -45,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fakeemergencyescape.call.R
+import com.fakeemergencyescape.call.domain.model.MessageType
 import com.fakeemergencyescape.call.ui.components.AppScaffold
 import com.fakeemergencyescape.call.ui.components.ElevatedAppCard
 import com.fakeemergencyescape.call.ui.components.LoadingOverlay
@@ -209,24 +210,65 @@ fun CreateFakeCallScreen(
                 singleLine = true,
                 enabled = !uiState.isReadOnly,
             )
-            OutlinedButton(
-                onClick = { showTemplateSheet = true },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isReadOnly,
-            ) {
-                Text(stringResource(R.string.template_picker_button))
-            }
-            OutlinedTextField(
-                value = uiState.message,
-                onValueChange = viewModel::onMessageChange,
-                label = { Text(stringResource(R.string.message_label)) },
-                placeholder = { Text(stringResource(R.string.message_hint)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
-                minLines = 3,
-                enabled = !uiState.isReadOnly,
+            Text(
+                text = stringResource(R.string.message_type_label),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
             )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                ScheduleChip(
+                    stringResource(R.string.message_type_text),
+                    uiState.messageType == MessageType.TEXT,
+                    !uiState.isReadOnly,
+                ) {
+                    viewModel.onMessageTypeChange(MessageType.TEXT)
+                }
+                ScheduleChip(
+                    stringResource(R.string.message_type_voice),
+                    uiState.messageType == MessageType.VOICE,
+                    !uiState.isReadOnly,
+                ) {
+                    viewModel.onMessageTypeChange(MessageType.VOICE)
+                }
+            }
+            when (uiState.messageType) {
+                MessageType.TEXT -> {
+                    OutlinedButton(
+                        onClick = { showTemplateSheet = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isReadOnly,
+                    ) {
+                        Text(stringResource(R.string.template_picker_button))
+                    }
+                    OutlinedTextField(
+                        value = uiState.message,
+                        onValueChange = viewModel::onMessageChange,
+                        label = { Text(stringResource(R.string.message_label)) },
+                        placeholder = { Text(stringResource(R.string.message_hint)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        minLines = 3,
+                        enabled = !uiState.isReadOnly,
+                    )
+                }
+                MessageType.VOICE -> {
+                    VoiceMessageSection(
+                        hasRecording = uiState.voiceMessagePath != null,
+                        isRecording = uiState.isRecording,
+                        recordingElapsedSec = uiState.recordingElapsedSec,
+                        isPlayingPreview = uiState.isPlayingPreview,
+                        enabled = !uiState.isReadOnly,
+                        onStartRecording = viewModel::startRecording,
+                        onStopRecording = viewModel::stopRecording,
+                        onClearRecording = viewModel::clearVoiceRecording,
+                        onTogglePreview = viewModel::togglePreviewPlayback,
+                    )
+                }
+            }
             Text(text = stringResource(R.string.schedule_when_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),

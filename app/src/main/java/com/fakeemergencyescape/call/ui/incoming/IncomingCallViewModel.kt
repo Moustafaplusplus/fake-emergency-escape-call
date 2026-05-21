@@ -9,8 +9,11 @@ import com.fakeemergencyescape.call.domain.audio.DeviceAudioHelper
 import com.fakeemergencyescape.call.domain.audio.RingingController
 import com.fakeemergencyescape.call.domain.audio.TextToSpeechManager
 import com.fakeemergencyescape.call.domain.audio.TtsState
+import com.fakeemergencyescape.call.domain.audio.VoiceMessagePlayer
+import com.fakeemergencyescape.call.domain.audio.VoiceMessageStorage
 import com.fakeemergencyescape.call.domain.model.CallStatus
 import com.fakeemergencyescape.call.domain.model.FakeCall
+import com.fakeemergencyescape.call.domain.model.MessageType
 import com.fakeemergencyescape.call.navigation.Routes
 import com.fakeemergencyescape.call.notifications.CallNotificationManager
 import com.fakeemergencyescape.call.ui.preview.PreviewCallData
@@ -62,6 +65,8 @@ class IncomingCallViewModel @Inject constructor(
     private val textToSpeechManager: TextToSpeechManager,
     private val deviceAudioHelper: DeviceAudioHelper,
     private val callNotificationManager: CallNotificationManager,
+    private val voiceMessagePlayer: VoiceMessagePlayer,
+    private val voiceMessageStorage: VoiceMessageStorage,
 ) : ViewModel() {
 
     private val callId: String = savedStateHandle.get<String>(Routes.ARG_FAKE_CALL_ID).orEmpty()
@@ -116,8 +121,18 @@ class IncomingCallViewModel @Inject constructor(
 
         viewModelScope.launch {
             textToSpeechManager.state.collect { ttsState ->
-                _uiState.update {
-                    it.copy(isSpeaking = ttsState == TtsState.SPEAKING)
+                if (activeCall?.messageType != MessageType.VOICE) {
+                    _uiState.update {
+                        it.copy(isSpeaking = ttsState == TtsState.SPEAKING)
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            voiceMessagePlayer.isPlaying.collect { playing ->
+                if (activeCall?.messageType == MessageType.VOICE) {
+                    _uiState.update { it.copy(isSpeaking = playing) }
                 }
             }
         }
@@ -140,6 +155,8 @@ class IncomingCallViewModel @Inject constructor(
                         callerName = it.callerName,
                         callerPhotoUri = null,
                         message = it.message,
+                        messageType = MessageType.TEXT,
+                        voiceMessageUri = null,
                         scheduledAtMillis = 0,
                         ringtoneUri = null,
                         voiceLocale = Locale.getDefault().toLanguageTag(),
@@ -180,7 +197,7 @@ class IncomingCallViewModel @Inject constructor(
     fun onToggleMute() {
         val newMuted = !_uiState.value.muted
         if (newMuted) {
-            textToSpeechManager.stop()
+            stopMessagePlayback()
         }
         _uiState.update { it.copy(muted = newMuted) }
         if (!newMuted && _uiState.value.screen == IncomingScreen.ACTIVE) {
@@ -202,6 +219,8 @@ class IncomingCallViewModel @Inject constructor(
                 callerName = _uiState.value.callerName.ifBlank { preview.callerName },
                 callerPhotoUri = null,
                 message = _uiState.value.message.ifBlank { preview.message },
+                messageType = MessageType.TEXT,
+                voiceMessageUri = null,
                 scheduledAtMillis = 0,
                 ringtoneUri = null,
                 voiceLocale = Locale.getDefault().toLanguageTag(),
@@ -242,28 +261,17 @@ class IncomingCallViewModel @Inject constructor(
         startCallDurationTimer()
         speakJob?.cancel()
         speakJob = viewModelScope.launch {
-            val ready = kotlinx.coroutines.suspendCancellableCoroutine { cont ->
-                textToSpeechManager.initialize { success ->
-                    cont.resume(success) {}
-                }
-            }
-            if (!ready) {
-                _uiState.update {
-                    it.copy(ttsError = "Speech not available. Install Google Text-to-speech from Play Store.")
-                }
-                return@launch
-            }
             if (speakDelayMs > 0) delay(speakDelayMs)
-            speakCurrentMessage()
+            playCurrentMessage()
         }
     }
 
     private fun replayMessage() {
         if (_uiState.value.muted) return
         speakJob?.cancel()
-        textToSpeechManager.stop()
+        stopMessagePlayback()
         speakJob = viewModelScope.launch {
-            speakCurrentMessage()
+            playCurrentMessage()
         }
     }
 
@@ -277,12 +285,41 @@ class IncomingCallViewModel @Inject constructor(
         }
     }
 
-    private fun speakCurrentMessage() {
+    private suspend fun playCurrentMessage() {
         if (_uiState.value.muted) return
         val call = activeCall ?: return
+        when (call.messageType) {
+            MessageType.VOICE -> playVoiceMessage(call.voiceMessageUri)
+            MessageType.TEXT -> playTextMessage(call)
+        }
+    }
+
+    private fun playVoiceMessage(uri: String?) {
+        if (!voiceMessageStorage.exists(uri)) {
+            _uiState.update {
+                it.copy(ttsError = "Voice message file is missing. Re-record in the scheduled call.")
+            }
+            return
+        }
+        _uiState.update { it.copy(ttsError = null) }
+        voiceMessagePlayer.play(uri!!)
+    }
+
+    private suspend fun playTextMessage(call: FakeCall) {
         val text = call.message.ifBlank { _uiState.value.message }
         if (text.isBlank()) return
-
+        val ready = kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+            textToSpeechManager.initialize { success ->
+                cont.resume(success) {}
+            }
+        }
+        if (!ready) {
+            _uiState.update {
+                it.copy(ttsError = "Speech not available. Install Google Text-to-speech from Play Store.")
+            }
+            return
+        }
+        _uiState.update { it.copy(ttsError = null) }
         textToSpeechManager.speak(
             text = text,
             locale = parseLocale(call.voiceLocale),
@@ -291,10 +328,15 @@ class IncomingCallViewModel @Inject constructor(
         )
     }
 
+    private fun stopMessagePlayback() {
+        textToSpeechManager.stop()
+        voiceMessagePlayer.stop()
+    }
+
     private fun stopActiveAudio() {
         speakJob?.cancel()
         durationJob?.cancel()
-        textToSpeechManager.stop()
+        stopMessagePlayback()
         callAudioRouter.exitCallMode()
     }
 

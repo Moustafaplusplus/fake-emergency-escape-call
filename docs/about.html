@@ -4,55 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About — Fake Emergency Escape Call</title>
-  <style>
-    :root {
-      --bg: #f0f4f8;
-      --card: #ffffff;
-      --text: #1e293b;
-      --muted: #64748b;
-      --accent: #2563eb;
-      --warn: #b45309;
-      --border: #e2e8f0;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: linear-gradient(180deg, var(--bg) 0%, #e8eef4 100%);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 48px; }
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 28px 24px;
-      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
-      border: 1px solid var(--border);
-    }
-    .notice {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin: 20px 0;
-      color: #92400e;
-    }
-    h1 { font-size: 1.75rem; margin: 0 0 8px; font-weight: 700; }
-    .tagline { color: var(--muted); margin-bottom: 24px; }
-    h2 { font-size: 1.1rem; margin: 24px 0 10px; color: var(--accent); }
-    ul { padding-left: 1.25rem; }
-    a { color: var(--accent); }
-    nav { margin-bottom: 20px; font-size: 0.95rem; }
-    nav a { margin-right: 16px; }
-    footer { margin-top: 28px; font-size: 0.85rem; color: var(--muted); }
-  </style>
+  <link rel="stylesheet" href="legal.css" />
 </head>
 <body>
   <div class="wrap">
-    <nav>
+    <nav class="legal-nav">
       <a href="about.html"><strong>About</strong></a>
       <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="terms.html">Terms</a>
     </nav>
     <div class="card">
       <h1>Fake Emergency Escape Call</h1>
@@ -60,40 +19,50 @@
 
       <div class="notice">
         <strong>Important:</strong> This app schedules <strong>simulated calls only</strong>.
-        It does <strong>not</strong> dial real phone numbers, connect to cellular networks, use VoIP to reach people, or contact emergency services (911, 112, 999, etc.).
+        It does <strong>not</strong> dial real phone numbers, use cellular voice service to reach people,
+        operate as your system Phone app, or contact emergency services (911, 112, 999, etc.).
       </div>
 
       <h2>What this app does</h2>
       <ul>
-        <li>Lets you schedule a fake incoming call with a custom caller name and spoken message</li>
-        <li>Plays a ringtone and shows an incoming-call style screen at the scheduled time</li>
-        <li>Speaks your script through the phone audio path after you tap Answer (text-to-speech)</li>
-        <li>Stores everything locally on your device — no cloud account required in v1</li>
+        <li>Schedule a simulated incoming call with a custom caller name</li>
+        <li>Play a ringtone and show an incoming-call style screen at the scheduled time</li>
+        <li>After you tap Answer, play your message by <strong>text-to-speech</strong> or a <strong>voice recording</strong> you made in the app</li>
+        <li>Store schedules and messages locally on your device (no cloud account in v1)</li>
       </ul>
 
       <h2>What this app does not do</h2>
       <ul>
-        <li>Replace your system Phone or dialer app</li>
-        <li>Call or message real people without your separate action</li>
-        <li>Guarantee delivery on all devices (battery savers and permission settings may delay alarms)</li>
-        <li>Provide legal, medical, or emergency advice</li>
+        <li>Replace your carrier dialer or place real outbound calls</li>
+        <li>Contact emergency services or law enforcement on your behalf</li>
+        <li>Guarantee alarms on every device (battery savers and denied permissions may delay rings)</li>
+        <li>Provide legal, medical, or safety advice</li>
       </ul>
+
+      <h2>UI notice</h2>
+      <p>
+        Incoming and in-call screens are designed to resemble a phone call for simulation purposes.
+        The App is <strong>not</strong> affiliated with your device manufacturer, carrier, or the system Phone app.
+        You are responsible for using it honestly and lawfully.
+      </p>
 
       <h2>Responsible use</h2>
       <p>
-        Do not use the App to impersonate law enforcement, emergency services, banks, or others in a deceptive or harmful way.
-        You are responsible for how you use scheduled simulated calls. Misuse may violate local laws or platform policies.
+        Do not use the App to impersonate police, emergency services, banks, employers, or anyone else
+        in a deceptive or harmful way. Misuse may violate local laws or platform policies.
       </p>
 
-      <h2>Privacy</h2>
+      <h2>Legal</h2>
       <p>
-        See our <a href="privacy-policy.html">Privacy Policy</a> for how data is handled (on-device only in v1).
+        <a href="privacy-policy.html">Privacy Policy</a> ·
+        <a href="terms.html">Terms of Service</a>
       </p>
 
-      <h2>Open source</h2>
+      <h2>Contact &amp; source</h2>
       <p>
-        Source code and issue tracker:
-        <a href="https://github.com/Moustafaplusplus/fake-emergency-escape-call">github.com/Moustafaplusplus/fake-emergency-escape-call</a>
+        Publisher: <strong>Moustafaplusplus</strong><br />
+        Email: <a href="mailto:moustafaplusplus@gmail.com">moustafaplusplus@gmail.com</a><br />
+        Source: <a href="https://github.com/Moustafaplusplus/fake-emergency-escape-call">GitHub</a>
       </p>
 
       <footer>

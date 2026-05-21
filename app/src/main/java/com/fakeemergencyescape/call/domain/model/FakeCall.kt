@@ -5,6 +5,8 @@ data class FakeCall(
     val callerName: String,
     val callerPhotoUri: String?,
     val message: String,
+    val messageType: MessageType = MessageType.TEXT,
+    val voiceMessageUri: String? = null,
     val scheduledAtMillis: Long,
     val ringtoneUri: String?,
     val voiceLocale: String,

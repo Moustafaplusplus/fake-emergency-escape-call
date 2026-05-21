@@ -4,8 +4,9 @@ Static HTML for Play Store and in-app links.
 
 | Page | File | URL after Pages is enabled |
 |------|------|---------------------------|
-| About | `about.html` | `https://<user>.github.io/fake-emergency-escape-call/about.html` |
-| Privacy | `privacy-policy.html` | `https://<user>.github.io/fake-emergency-escape-call/privacy-policy.html` |
+| About | `about.html` | `https://moustafaplusplus.github.io/fake-emergency-escape-call/about.html` |
+| Privacy | `privacy-policy.html` | `https://moustafaplusplus.github.io/fake-emergency-escape-call/privacy-policy.html` |
+| Terms | `terms.html` | `https://moustafaplusplus.github.io/fake-emergency-escape-call/terms.html` |
 
 ## Enable GitHub Pages
 

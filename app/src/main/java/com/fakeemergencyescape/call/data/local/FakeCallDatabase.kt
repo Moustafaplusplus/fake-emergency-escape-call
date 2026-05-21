@@ -11,10 +11,10 @@ import androidx.room.TypeConverters
         CallHistoryEntity::class,
         SavedCallerEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
-@TypeConverters(CallStatusConverter::class)
+@TypeConverters(CallStatusConverter::class, MessageTypeConverter::class)
 abstract class FakeCallDatabase : RoomDatabase() {
     abstract fun fakeCallDao(): FakeCallDao
     abstract fun templateDao(): TemplateDao

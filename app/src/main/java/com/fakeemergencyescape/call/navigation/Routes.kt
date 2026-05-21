@@ -8,6 +8,7 @@ object Routes {
     const val ONBOARDING = "onboarding"
     const val ABOUT = "about"
     const val PRIVACY = "privacy"
+    const val TERMS = "terms"
 
     const val INCOMING = "incoming/{fakeCallId}"
     const val ACTIVE = "active/{fakeCallId}"

@@ -51,10 +51,13 @@ Your URLs (after deploy):
 
 - About: `https://moustafaplusplus.github.io/fake-emergency-escape-call/about.html`
 - Privacy: `https://moustafaplusplus.github.io/fake-emergency-escape-call/privacy-policy.html`
+- Terms: `https://moustafaplusplus.github.io/fake-emergency-escape-call/terms.html`
 
 ## 4. Play Console
 
-Paste the **privacy policy** URL into Play Console → App content → Privacy policy.
+- Paste the **privacy policy** URL into Play Console → App content → Privacy policy.
+- Align **Data safety** with the policy (include on-device voice recordings; not shared).
+- Update `SUPPORT_EMAIL` in `LegalUrls.kt` and `docs/*.html` if your contact email differs.
 
 ## 5. Different username or repo name?
 

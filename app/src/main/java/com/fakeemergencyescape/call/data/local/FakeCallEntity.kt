@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.fakeemergencyescape.call.domain.model.CallStatus
+import com.fakeemergencyescape.call.domain.model.MessageType
 
 @Entity(
     tableName = "fake_calls",
@@ -17,6 +18,8 @@ data class FakeCallEntity(
     val callerName: String,
     val callerPhotoUri: String?,
     val message: String,
+    val messageType: MessageType = MessageType.TEXT,
+    val voiceMessageUri: String? = null,
     val scheduledAtMillis: Long,
     val ringtoneUri: String?,
     val voiceLocale: String,

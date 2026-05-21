@@ -30,6 +30,7 @@ import com.fakeemergencyescape.call.ui.preview.PreviewCallData
 import com.fakeemergencyescape.call.ui.settings.AboutScreen
 import com.fakeemergencyescape.call.ui.settings.PrivacyScreen
 import com.fakeemergencyescape.call.ui.settings.SettingsScreen
+import com.fakeemergencyescape.call.ui.settings.TermsScreen
 import com.fakeemergencyescape.call.ui.settings.SettingsViewModel
 import com.fakeemergencyescape.call.ui.theme.CallScreenTheme
 
@@ -96,6 +97,7 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() },
                 onAbout = { navController.navigate(Routes.ABOUT) },
                 onPrivacy = { navController.navigate(Routes.PRIVACY) },
+                onTerms = { navController.navigate(Routes.TERMS) },
             )
         }
 
@@ -105,6 +107,10 @@ fun AppNavigation() {
 
         composable(Routes.PRIVACY) {
             PrivacyScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.TERMS) {
+            TermsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.ONBOARDING) {

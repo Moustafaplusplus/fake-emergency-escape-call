@@ -22,9 +22,9 @@ import com.fakeemergencyescape.call.ui.components.ElevatedAppCard
 import com.fakeemergencyescape.call.ui.components.OpenLegalUrlButton
 
 @Composable
-fun PrivacyScreen(onBack: () -> Unit) {
+fun TermsScreen(onBack: () -> Unit) {
     AppScaffold(
-        title = { Text(stringResource(R.string.privacy_title), fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.settings_terms), fontWeight = FontWeight.Bold) },
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.nav_back))
@@ -43,26 +43,17 @@ fun PrivacyScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.privacy_body),
+                    text = stringResource(R.string.about_disclaimer),
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    text = stringResource(R.string.privacy_local_only),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    text = stringResource(R.string.privacy_microphone),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = stringResource(R.string.privacy_no_analytics),
+                    text = stringResource(R.string.about_ui_notice),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OpenLegalUrlButton(
-                    label = stringResource(R.string.legal_view_privacy_online),
-                    url = LegalUrls.PRIVACY_POLICY,
+                    label = stringResource(R.string.legal_view_terms_online),
+                    url = LegalUrls.TERMS,
                 )
             }
         }

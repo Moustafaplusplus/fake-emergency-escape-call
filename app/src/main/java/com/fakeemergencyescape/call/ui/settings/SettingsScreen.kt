@@ -51,6 +51,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onAbout: () -> Unit,
     onPrivacy: () -> Unit,
+    onTerms: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showLocaleDialog by remember { mutableStateOf(false) }
@@ -177,6 +178,7 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(horizontal = 12.dp)) {
             SettingsLinkRow(label = stringResource(R.string.settings_about), onClick = onAbout)
             SettingsLinkRow(label = stringResource(R.string.settings_privacy), onClick = onPrivacy)
+            SettingsLinkRow(label = stringResource(R.string.settings_terms), onClick = onTerms)
                 }
             }
             Spacer(modifier = Modifier.padding(8.dp))

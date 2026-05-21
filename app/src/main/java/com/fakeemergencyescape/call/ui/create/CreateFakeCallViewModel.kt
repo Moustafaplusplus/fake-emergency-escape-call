@@ -6,10 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.fakeemergencyescape.call.data.repository.FakeCallRepository
 import com.fakeemergencyescape.call.data.repository.FakeCallRepository.Companion.VIBRATE_ONLY_URI
 import com.fakeemergencyescape.call.data.repository.SettingsRepository
+import com.fakeemergencyescape.call.domain.audio.VoiceMessagePlayer
+import com.fakeemergencyescape.call.domain.audio.VoiceMessageRecorder
+import com.fakeemergencyescape.call.domain.audio.VoiceMessageStorage
 import com.fakeemergencyescape.call.domain.model.CallStatus
 import com.fakeemergencyescape.call.domain.model.CallTemplate
+import com.fakeemergencyescape.call.domain.model.MessageType
 import com.fakeemergencyescape.call.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +29,11 @@ import javax.inject.Inject
 data class CreateFakeCallUiState(
     val callerName: String = "",
     val message: String = "",
+    val messageType: MessageType = MessageType.TEXT,
+    val voiceMessagePath: String? = null,
+    val isRecording: Boolean = false,
+    val recordingElapsedSec: Int = 0,
+    val isPlayingPreview: Boolean = false,
     val scheduleOption: ScheduleOption = ScheduleOption.MIN_5,
     val customTimeMillis: Long = System.currentTimeMillis() + 3600_000,
     val vibrationEnabled: Boolean = true,
@@ -42,6 +53,9 @@ class CreateFakeCallViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: FakeCallRepository,
     private val settingsRepository: SettingsRepository,
+    private val voiceMessageStorage: VoiceMessageStorage,
+    private val voiceMessageRecorder: VoiceMessageRecorder,
+    private val voiceMessagePlayer: VoiceMessagePlayer,
 ) : ViewModel() {
 
     private val editCallId: String? = savedStateHandle.get<String>(Routes.ARG_FAKE_CALL_ID)
@@ -57,6 +71,9 @@ class CreateFakeCallViewModel @Inject constructor(
     val templates: StateFlow<List<CallTemplate>> = repository.observeTemplates()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    private var recordingTimerJob: Job? = null
+    private var tempRecordingPath: String? = null
+
     init {
         viewModelScope.launch {
             repository.observeTemplates().first()
@@ -69,13 +86,19 @@ class CreateFakeCallViewModel @Inject constructor(
                         it.copy(
                             callerName = call.callerName,
                             message = call.message,
+                            messageType = call.messageType,
+                            voiceMessagePath = call.voiceMessageUri,
                             customTimeMillis = call.scheduledAtMillis,
                             scheduleOption = ScheduleOption.CUSTOM,
                             vibrationEnabled = call.vibrationEnabled,
                             vibrateOnly = call.ringtoneUri == VIBRATE_ONLY_URI,
                             isLoading = false,
                             isReadOnly = readOnly,
-                            canSave = !readOnly && call.callerName.isNotBlank() && call.message.isNotBlank(),
+                            canSave = !readOnly && hasValidMessage(
+                                call.messageType,
+                                call.message,
+                                call.voiceMessageUri,
+                            ) && call.callerName.isNotBlank(),
                             errorMessage = if (readOnly) {
                                 "This call is ringing — wait until it ends before editing."
                             } else {
@@ -88,44 +111,107 @@ class CreateFakeCallViewModel @Inject constructor(
                 }
             }
         }
+
+        viewModelScope.launch {
+            voiceMessagePlayer.isPlaying.collect { playing ->
+                _uiState.update { it.copy(isPlayingPreview = playing) }
+            }
+        }
     }
 
     fun onCallerNameChange(value: String) = updateForm { it.copy(callerName = value) }
     fun onMessageChange(value: String) = updateForm { it.copy(message = value) }
+
+    fun onMessageTypeChange(type: MessageType) {
+        updateForm { current ->
+            if (type == MessageType.TEXT) {
+                voiceMessagePlayer.stop()
+                current.copy(messageType = type)
+            } else {
+                current.copy(messageType = type)
+            }
+        }
+    }
+
+    fun startRecording(): Boolean {
+        if (_uiState.value.isReadOnly || _uiState.value.isRecording) return false
+        voiceMessagePlayer.stop()
+        val file = voiceMessageStorage.createTempRecordingFile()
+        tempRecordingPath = file.absolutePath
+        val started = voiceMessageRecorder.start(file)
+        if (!started) {
+            tempRecordingPath = null
+            voiceMessageStorage.deleteFile(file.absolutePath)
+            _uiState.update { it.copy(snackbarMessage = "Could not start recording") }
+            return false
+        }
+        _uiState.update { it.copy(isRecording = true, recordingElapsedSec = 0) }
+        recordingTimerJob?.cancel()
+        recordingTimerJob = viewModelScope.launch {
+            while (true) {
+                delay(1_000)
+                _uiState.update { it.copy(recordingElapsedSec = it.recordingElapsedSec + 1) }
+            }
+        }
+        return true
+    }
+
+    fun stopRecording() {
+        if (!_uiState.value.isRecording) return
+        recordingTimerJob?.cancel()
+        val path = voiceMessageRecorder.stop()
+        _uiState.update { it.copy(isRecording = false) }
+        if (path == null) {
+            _uiState.update { it.copy(snackbarMessage = "Recording failed — try again") }
+            return
+        }
+        _uiState.value.voiceMessagePath?.let { voiceMessageStorage.deleteFile(it) }
+        updateForm { it.copy(voiceMessagePath = path) }
+    }
+
+    fun clearVoiceRecording() {
+        voiceMessagePlayer.stop()
+        voiceMessageRecorder.cancel()
+        recordingTimerJob?.cancel()
+        _uiState.value.voiceMessagePath?.let { voiceMessageStorage.deleteFile(it) }
+        tempRecordingPath?.let { voiceMessageStorage.deleteFile(it) }
+        tempRecordingPath = null
+        updateForm {
+            it.copy(
+                voiceMessagePath = null,
+                isRecording = false,
+                recordingElapsedSec = 0,
+            )
+        }
+    }
+
+    fun togglePreviewPlayback() {
+        val path = _uiState.value.voiceMessagePath ?: return
+        if (_uiState.value.isPlayingPreview) {
+            voiceMessagePlayer.stop()
+        } else {
+            voiceMessagePlayer.play(path)
+        }
+    }
+
     fun onScheduleOptionChange(option: ScheduleOption) = updateForm { it.copy(scheduleOption = option) }
     fun onCustomTimeChange(millis: Long) = updateForm { it.copy(customTimeMillis = millis, scheduleOption = ScheduleOption.CUSTOM) }
     fun onVibrationChange(enabled: Boolean) = updateForm { it.copy(vibrationEnabled = enabled) }
     fun onVibrateOnlyChange(enabled: Boolean) = updateForm { it.copy(vibrateOnly = enabled) }
     fun onTemplateSelected(template: CallTemplate) = updateForm { it.copy(message = template.message) }
     fun clearSaveSuccess() = _uiState.update { it.copy(saveSuccess = false) }
-
     fun clearSnackbarMessage() = _uiState.update { it.copy(snackbarMessage = null) }
 
     fun scheduleTestIn30Seconds() {
         val state = _uiState.value
-        if (state.callerName.isBlank() || state.message.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Enter caller name and message first") }
+        if (!isFormValid(state)) {
+            _uiState.update { it.copy(errorMessage = validationError(state)) }
             return
         }
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val rate = settingsRepository.ttsSpeechRate.first()
-                val pitch = settingsRepository.ttsPitch.first()
-                val locale = settingsRepository.ttsLocale.first().ifBlank {
-                    java.util.Locale.getDefault().toLanguageTag()
-                }
-                repository.scheduleCall(
-                    callerName = state.callerName,
-                    message = state.message,
-                    scheduledAtMillis = System.currentTimeMillis() + 30_000,
-                    vibrationEnabled = state.vibrationEnabled,
-                    vibrateOnly = state.vibrateOnly,
-                    voiceLocale = locale,
-                    speechRate = rate,
-                    pitch = pitch,
-                    existingId = editCallId,
-                )
+                saveCall(System.currentTimeMillis() + 30_000, state)
                 _uiState.update { it.copy(isLoading = false, saveSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update {
@@ -138,8 +224,8 @@ class CreateFakeCallViewModel @Inject constructor(
     fun scheduleCall() {
         val state = _uiState.value
         if (state.isReadOnly) return
-        if (state.callerName.isBlank() || state.message.isBlank()) {
-            _uiState.update { it.copy(snackbarMessage = "Name and message are required") }
+        if (!isFormValid(state)) {
+            _uiState.update { it.copy(snackbarMessage = validationError(state)) }
             return
         }
         val scheduledAt = ScheduleTime.toMillis(state.scheduleOption, state.customTimeMillis)
@@ -150,22 +236,7 @@ class CreateFakeCallViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, snackbarMessage = null) }
             try {
-                val rate = settingsRepository.ttsSpeechRate.first()
-                val pitch = settingsRepository.ttsPitch.first()
-                val locale = settingsRepository.ttsLocale.first().ifBlank {
-                    java.util.Locale.getDefault().toLanguageTag()
-                }
-                repository.scheduleCall(
-                    callerName = state.callerName,
-                    message = state.message,
-                    scheduledAtMillis = scheduledAt,
-                    vibrationEnabled = state.vibrationEnabled,
-                    vibrateOnly = state.vibrateOnly,
-                    voiceLocale = locale,
-                    speechRate = rate,
-                    pitch = pitch,
-                    existingId = editCallId,
-                )
+                saveCall(scheduledAt, state)
                 _uiState.update { it.copy(isLoading = false, saveSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update {
@@ -178,14 +249,73 @@ class CreateFakeCallViewModel @Inject constructor(
         }
     }
 
+    private suspend fun saveCall(scheduledAtMillis: Long, state: CreateFakeCallUiState) {
+        val rate = settingsRepository.ttsSpeechRate.first()
+        val pitch = settingsRepository.ttsPitch.first()
+        val locale = settingsRepository.ttsLocale.first().ifBlank {
+            java.util.Locale.getDefault().toLanguageTag()
+        }
+        val displayMessage = when (state.messageType) {
+            MessageType.TEXT -> state.message
+            MessageType.VOICE -> state.message.ifBlank { VOICE_MESSAGE_LABEL }
+        }
+        repository.scheduleCall(
+            callerName = state.callerName,
+            message = displayMessage,
+            messageType = state.messageType,
+            voiceMessagePath = state.voiceMessagePath,
+            scheduledAtMillis = scheduledAtMillis,
+            vibrationEnabled = state.vibrationEnabled,
+            vibrateOnly = state.vibrateOnly,
+            voiceLocale = locale,
+            speechRate = rate,
+            pitch = pitch,
+            existingId = editCallId,
+        )
+    }
+
     private fun updateForm(transform: (CreateFakeCallUiState) -> CreateFakeCallUiState) {
         _uiState.update { current ->
             if (current.isReadOnly) return@update current
             val next = transform(current)
             next.copy(
-                canSave = next.callerName.isNotBlank() && next.message.isNotBlank(),
+                canSave = next.callerName.isNotBlank() && hasValidMessage(
+                    next.messageType,
+                    next.message,
+                    next.voiceMessagePath,
+                ),
                 errorMessage = null,
             )
         }
+    }
+
+    private fun hasValidMessage(
+        messageType: MessageType,
+        message: String,
+        voicePath: String?,
+    ): Boolean = when (messageType) {
+        MessageType.TEXT -> message.isNotBlank()
+        MessageType.VOICE -> voiceMessageStorage.exists(voicePath)
+    }
+
+    private fun isFormValid(state: CreateFakeCallUiState): Boolean =
+        state.callerName.isNotBlank() && hasValidMessage(state.messageType, state.message, state.voiceMessagePath)
+
+    private fun validationError(state: CreateFakeCallUiState): String = when {
+        state.callerName.isBlank() -> "Enter caller name"
+        state.messageType == MessageType.VOICE && !voiceMessageStorage.exists(state.voiceMessagePath) ->
+            "Record a voice message first"
+        else -> "Enter a message"
+    }
+
+    override fun onCleared() {
+        voiceMessageRecorder.cancel()
+        voiceMessagePlayer.stop()
+        recordingTimerJob?.cancel()
+        super.onCleared()
+    }
+
+    companion object {
+        const val VOICE_MESSAGE_LABEL = "Voice message"
     }
 }

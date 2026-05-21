@@ -7,9 +7,11 @@ import com.fakeemergencyescape.call.data.local.FakeCallDao
 import com.fakeemergencyescape.call.data.local.TemplateDao
 import com.fakeemergencyescape.call.data.local.toDomain
 import com.fakeemergencyescape.call.data.local.toEntity
+import com.fakeemergencyescape.call.domain.audio.VoiceMessageStorage
 import com.fakeemergencyescape.call.domain.model.CallStatus
 import com.fakeemergencyescape.call.domain.model.CallTemplate
 import com.fakeemergencyescape.call.domain.model.FakeCall
+import com.fakeemergencyescape.call.domain.model.MessageType
 import com.fakeemergencyescape.call.domain.scheduler.FakeCallScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -25,6 +27,7 @@ class FakeCallRepository @Inject constructor(
     private val templateDao: TemplateDao,
     private val databaseSeeder: DatabaseSeeder,
     private val fakeCallScheduler: FakeCallScheduler,
+    private val voiceMessageStorage: VoiceMessageStorage,
 ) {
     fun canScheduleExactAlarms(): Boolean = fakeCallScheduler.canScheduleExactAlarms()
 
@@ -46,6 +49,8 @@ class FakeCallRepository @Inject constructor(
     suspend fun scheduleCall(
         callerName: String,
         message: String,
+        messageType: MessageType = MessageType.TEXT,
+        voiceMessagePath: String? = null,
         scheduledAtMillis: Long,
         vibrationEnabled: Boolean,
         vibrateOnly: Boolean,
@@ -58,13 +63,28 @@ class FakeCallRepository @Inject constructor(
         val now = System.currentTimeMillis()
         val id = existingId ?: UUID.randomUUID().toString()
 
-        existingId?.let { fakeCallScheduler.cancel(it) }
+        existingId?.let { previousId ->
+            fakeCallScheduler.cancel(previousId)
+            fakeCallDao.getById(previousId)?.voiceMessageUri?.let { oldPath ->
+                if (messageType != MessageType.VOICE || voiceMessagePath != oldPath) {
+                    voiceMessageStorage.deleteFile(oldPath)
+                }
+            }
+        }
+
+        val resolvedVoiceUri = if (messageType == MessageType.VOICE && !voiceMessagePath.isNullOrBlank()) {
+            voiceMessageStorage.finalizeRecording(voiceMessagePath, id)
+        } else {
+            null
+        }
 
         val entity = FakeCall(
             id = id,
             callerName = callerName.trim(),
             callerPhotoUri = null,
             message = message.trim(),
+            messageType = messageType,
+            voiceMessageUri = resolvedVoiceUri,
             scheduledAtMillis = scheduledAtMillis,
             ringtoneUri = if (vibrateOnly) VIBRATE_ONLY_URI else null,
             voiceLocale = voiceLocale,
@@ -116,6 +136,8 @@ class FakeCallRepository @Inject constructor(
 
     suspend fun deleteCall(id: String) {
         fakeCallScheduler.cancel(id)
+        fakeCallDao.getById(id)?.voiceMessageUri?.let { voiceMessageStorage.deleteFile(it) }
+        voiceMessageStorage.deleteForCall(id)
         fakeCallDao.deleteById(id)
     }
 

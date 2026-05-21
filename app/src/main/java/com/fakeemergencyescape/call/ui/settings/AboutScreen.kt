@@ -48,7 +48,12 @@ fun AboutScreen(onBack: () -> Unit) {
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     Text(
-                        text = stringResource(R.string.about_simulated_notice),
+                        text = stringResource(R.string.about_ui_notice),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = stringResource(R.string.about_voice_messages),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -65,6 +70,10 @@ fun AboutScreen(onBack: () -> Unit) {
                     OpenLegalUrlButton(
                         label = stringResource(R.string.legal_view_about_online),
                         url = LegalUrls.ABOUT,
+                    )
+                    OpenLegalUrlButton(
+                        label = stringResource(R.string.legal_view_terms_online),
+                        url = LegalUrls.TERMS,
                     )
                 }
             }

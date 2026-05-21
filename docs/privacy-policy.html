@@ -4,133 +4,130 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Privacy Policy — Fake Emergency Escape Call</title>
-  <style>
-    :root {
-      --bg: #f0f4f8;
-      --card: #ffffff;
-      --text: #1e293b;
-      --muted: #64748b;
-      --accent: #2563eb;
-      --border: #e2e8f0;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: linear-gradient(180deg, var(--bg) 0%, #e8eef4 100%);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 48px; }
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 28px 24px;
-      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
-      border: 1px solid var(--border);
-    }
-    h1 { font-size: 1.75rem; margin: 0 0 8px; font-weight: 700; }
-    .updated { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; }
-    h2 { font-size: 1.1rem; margin: 28px 0 10px; color: var(--accent); }
-    p, li { font-size: 1rem; }
-    ul { padding-left: 1.25rem; }
-    a { color: var(--accent); }
-    nav { margin-bottom: 20px; font-size: 0.95rem; }
-    nav a { margin-right: 16px; }
-    footer { margin-top: 28px; font-size: 0.85rem; color: var(--muted); }
-  </style>
+  <link rel="stylesheet" href="legal.css" />
 </head>
 <body>
   <div class="wrap">
-    <nav>
+    <nav class="legal-nav">
       <a href="about.html">About</a>
       <a href="privacy-policy.html"><strong>Privacy Policy</strong></a>
+      <a href="terms.html">Terms</a>
     </nav>
     <div class="card">
       <h1>Privacy Policy</h1>
       <p class="updated">Last updated: May 21, 2026</p>
 
       <p>
-        <strong>Fake Emergency Escape Call</strong> (“the App”) is published by the developer of this project.
-        This policy explains how the App handles information. The App is designed for
-        <strong>scheduled simulated calls only</strong> — it does not place real phone calls or contact emergency services.
+        <strong>Fake Emergency Escape Call</strong> (“the App”) is offered by
+        <strong>Moustafaplusplus</strong> (“we”, “us”). This policy describes what information
+        the App handles and how. The App provides <strong>scheduled simulated incoming calls only</strong> —
+        it does not place real phone calls or contact emergency services.
       </p>
 
       <h2>Summary</h2>
       <ul>
-        <li>We do <strong>not</strong> collect, sell, or share your personal data with servers or third-party analytics in version 1.0.</li>
-        <li>All scheduled calls, messages, templates, and settings stay <strong>on your device</strong>.</li>
+        <li>We do <strong>not</strong> operate servers that collect your personal data in version 1.0.</li>
+        <li>We do <strong>not</strong> sell your data or use third-party analytics or ad SDKs in version 1.0.</li>
+        <li>Scheduled calls, text messages, optional voice recordings, templates, and settings are stored <strong>on your device</strong>.</li>
         <li>No account or sign-in is required.</li>
       </ul>
 
       <h2>Information stored on your device</h2>
-      <p>The App may store the following locally on your phone:</p>
+      <p>Depending on how you use the App, the following may be stored locally:</p>
       <ul>
-        <li>Caller names and messages you enter for simulated calls</li>
-        <li>Schedule times and call status (scheduled, completed, declined, etc.)</li>
-        <li>Message templates and app preferences (speech rate, vibration defaults, onboarding status)</li>
-        <li>Optional caller photos if you choose to add them in a future version</li>
+        <li>Caller names and text messages you enter for simulated calls</li>
+        <li><strong>Voice recordings</strong> you choose to record for playback after you answer (stored as audio files in the App’s private storage)</li>
+        <li>Schedule times and call status (scheduled, ringing, completed, declined, etc.)</li>
+        <li>Message templates and preferences (speech rate, vibration defaults, onboarding completion)</li>
       </ul>
       <p>
-        This data is saved using Android local storage (Room database and DataStore).
-        It is not transmitted to our servers because the App has no backend in v1.
+        Data is stored using Android local storage (Room database, DataStore, and app-private files).
+        It is not uploaded to our servers because version 1.0 has no backend.
       </p>
 
-      <h2>Information we do not collect</h2>
+      <h2>Microphone</h2>
+      <p>
+        The App requests <strong>microphone</strong> permission only when you choose
+        <strong>Voice recording</strong> as the message type and tap record. Audio is captured
+        solely to create a message that plays on your device after you answer a simulated call.
+        We do not transmit recordings to our servers in version 1.0.
+      </p>
+
+      <h2>Information we do not collect remotely</h2>
       <ul>
-        <li>Name, email, or phone number for an account (no accounts)</li>
+        <li>Account registration (no accounts)</li>
         <li>Precise location</li>
-        <li>Contacts from your address book (unless you type a name manually)</li>
-        <li>Analytics, advertising IDs, or crash reporting SDK data in v1</li>
+        <li>Your contacts list (names you type are stored locally only if you enter them)</li>
+        <li>Analytics, advertising IDs, or crash reporting SDK data in version 1.0</li>
       </ul>
 
       <h2>Android permissions</h2>
-      <p>The App may request permissions to provide its features. They are used only on-device:</p>
+      <p>Permissions are used on-device for App features:</p>
       <ul>
-        <li><strong>Notifications</strong> — show ringing and call alerts when the App is in the background</li>
-        <li><strong>Exact alarms</strong> — trigger scheduled simulated calls at the time you choose</li>
-        <li><strong>Full-screen intent</strong> — display the incoming-call screen over the lock screen when allowed by your device</li>
-        <li><strong>Vibrate</strong> — vibration while a simulated call is ringing</li>
-        <li><strong>Foreground service (media playback)</strong> — play ringtone reliably while ringing</li>
-        <li><strong>Wake lock</strong> — keep the screen on during an active simulated call session</li>
+        <li><strong>Notifications</strong> — ringing alerts when the App is in the background</li>
+        <li><strong>Microphone</strong> — optional voice message recording (only when you start recording)</li>
+        <li><strong>Exact alarms</strong> — fire scheduled simulated calls at your chosen time</li>
+        <li><strong>Full-screen intent</strong> — show the incoming-call screen over the lock screen when the system allows</li>
+        <li><strong>Vibrate</strong> — vibration while ringing</li>
+        <li><strong>Foreground service (media playback)</strong> — reliable ringtone playback while ringing</li>
+        <li><strong>Wake lock</strong> — keep the screen on during an active simulated call</li>
         <li><strong>Receive boot completed</strong> — reschedule alarms after device restart where supported</li>
       </ul>
-      <p>The App does not use the microphone to record you in v1. Text-to-speech plays a script you wrote after you answer a simulated call.</p>
+      <p>
+        Text-to-speech (when you use a text message) uses the speech engine on your device
+        (for example Google Text-to-speech), subject to that provider’s policies.
+      </p>
 
       <h2>Third-party services</h2>
       <p>
-        Version 1.0 does not integrate third-party analytics, advertising, or cloud backup SDKs.
-        Text-to-speech uses the speech engine installed on your device (for example Google Text-to-speech), which is governed by that provider’s policies.
+        Version 1.0 does not include third-party analytics, advertising, or cloud backup SDKs.
+        Device speech engines and the Google Play distribution platform have their own policies.
+      </p>
+
+      <h2>Google Play Data safety</h2>
+      <p>
+        Information in this policy should match what you declare in Play Console Data safety.
+        For version 1.0, user-provided voice recordings and call content are processed and stored
+        <strong>on device only</strong>, not shared with us.
       </p>
 
       <h2>Children’s privacy</h2>
       <p>
-        The App is not directed at children under 13. We do not knowingly collect personal information from children.
+        The App is not directed at children under 13. We do not knowingly collect personal
+        information from children.
       </p>
 
       <h2>Data retention and deletion</h2>
       <p>
-        Data remains on your device until you delete it in the App, clear app storage in system settings, or uninstall the App.
-        Uninstalling removes local app data.
+        Data remains until you delete calls in the App, clear app storage in system settings,
+        or uninstall the App. Uninstalling removes local databases and voice files.
       </p>
 
       <h2>Security</h2>
       <p>
-        Data is stored in the App’s private storage area on your device, protected by Android’s application sandbox.
-        No method of local storage is 100% secure; keep your device locked and updated.
+        Data lives in the App’s sandbox on your device. No storage method is perfectly secure;
+        use a device lock and keep your system updated.
       </p>
 
-      <h2>Changes to this policy</h2>
+      <h2>Your rights</h2>
       <p>
-        We may update this policy when the App changes (for example if analytics or cloud features are added).
-        The “Last updated” date at the top will change. Continued use after updates means you accept the revised policy.
+        Because data is stored locally, you control it by using the App’s delete features,
+        clearing storage, or uninstalling. If you need help, contact us using the details below.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        We may update this policy when the App changes. The date above will change.
+        Continued use after updates means you accept the revised policy.
       </p>
 
       <h2>Contact</h2>
       <p>
-        For privacy questions or requests, open an issue on the project repository:
-        <a href="https://github.com/Moustafaplusplus/fake-emergency-escape-call/issues">GitHub Issues</a>.
+        Email: <a href="mailto:moustafaplusplus@gmail.com">moustafaplusplus@gmail.com</a><br />
+        GitHub: <a href="https://github.com/Moustafaplusplus/fake-emergency-escape-call/issues">Issues</a>
       </p>
+
+      <p>See also: <a href="terms.html">Terms of Service</a> · <a href="about.html">About</a></p>
 
       <footer>
         <p>Package: <code>com.fakeemergencyescape.call</code></p>
