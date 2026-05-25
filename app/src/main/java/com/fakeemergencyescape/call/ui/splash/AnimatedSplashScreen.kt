@@ -38,8 +38,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fakeemergencyescape.call.R
 
-private val SplashBackground = Color(0xFF0A0A0C)
-private val SplashGlow = Color(0x66FF2D2D)
+import com.fakeemergencyescape.call.ui.theme.DarkBackground
+import com.fakeemergencyescape.call.ui.theme.SecondaryAccent
+import com.fakeemergencyescape.call.ui.theme.TertiaryAccent
+
+private val SplashGlowBlue = TertiaryAccent.copy(alpha = 0.45f)
+private val SplashGlowPurple = SecondaryAccent.copy(alpha = 0.35f)
 
 @Composable
 fun AnimatedSplashScreen(modifier: Modifier = Modifier) {
@@ -79,9 +83,9 @@ fun AnimatedSplashScreen(modifier: Modifier = Modifier) {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        SplashBackground,
-                        Color(0xFF141418),
-                        SplashBackground,
+                        DarkBackground,
+                        Color(0xFF0C1224),
+                        DarkBackground,
                     ),
                 ),
             ),
@@ -94,7 +98,7 @@ fun AnimatedSplashScreen(modifier: Modifier = Modifier) {
                 .alpha(glowAlpha * logoAlpha)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(SplashGlow, Color.Transparent),
+                        colors = listOf(SplashGlowBlue, SplashGlowPurple, Color.Transparent),
                     ),
                     shape = RoundedCornerShape(50),
                 ),
@@ -111,7 +115,7 @@ fun AnimatedSplashScreen(modifier: Modifier = Modifier) {
                     .size(132.dp)
                     .scale(logoScale)
                     .alpha(logoAlpha)
-                    .shadow(24.dp, RoundedCornerShape(28.dp), spotColor = SplashGlow)
+                    .shadow(24.dp, RoundedCornerShape(28.dp), spotColor = SplashGlowBlue)
                     .clip(RoundedCornerShape(28.dp)),
                 contentScale = ContentScale.Crop,
             )

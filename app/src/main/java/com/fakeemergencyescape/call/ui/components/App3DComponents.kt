@@ -15,7 +15,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -40,11 +40,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.fakeemergencyescape.call.ui.theme.BrandGradients
 import com.fakeemergencyescape.call.ui.theme.CallAnswerGreen
-import com.fakeemergencyescape.call.ui.theme.PrimaryAccent
-import com.fakeemergencyescape.call.ui.theme.PrimaryAccentDark
-import com.fakeemergencyescape.call.ui.theme.PrimaryAccentLight
+import com.fakeemergencyescape.call.ui.theme.DarkGlassBorder
+import com.fakeemergencyescape.call.ui.theme.DarkOutline
+import com.fakeemergencyescape.call.ui.theme.DarkSurfaceVariant
 import com.fakeemergencyescape.call.ui.theme.SecondaryAccent
+import com.fakeemergencyescape.call.ui.theme.TertiaryAccent
 
 @Composable
 fun Primary3DButton(
@@ -64,6 +66,7 @@ fun Primary3DButton(
         )
     }
     val elevation = if (pressed) 4.dp else 14.dp
+    val shape = RoundedCornerShape(22.dp)
 
     Box(
         modifier = modifier
@@ -71,15 +74,12 @@ fun Primary3DButton(
                 scaleX = scale.value
                 scaleY = scale.value
             }
-            .shadow(elevation, RoundedCornerShape(22.dp), spotColor = PrimaryAccent.copy(alpha = 0.45f))
-            .clip(RoundedCornerShape(22.dp))
+            .shadow(elevation, shape, spotColor = TertiaryAccent.copy(alpha = 0.45f))
+            .clip(shape)
             .background(
                 when {
-                    !enabled -> Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surfaceVariant,
-                            MaterialTheme.colorScheme.surfaceVariant,
-                        ),
+                    !enabled -> Brush.horizontalGradient(
+                        colors = listOf(DarkSurfaceVariant, DarkSurfaceVariant),
                     )
                     success -> Brush.verticalGradient(
                         colors = listOf(
@@ -87,12 +87,10 @@ fun Primary3DButton(
                             CallAnswerGreen.copy(alpha = 0.82f),
                         ),
                     )
-                    else -> Brush.verticalGradient(
-                        colors = listOf(PrimaryAccentLight, PrimaryAccent, PrimaryAccentDark),
-                    )
+                    else -> BrandGradients.bluePurpleHorizontal
                 },
             )
-            .border(1.dp, Color.White.copy(alpha = if (enabled) 0.35f else 0.1f), RoundedCornerShape(22.dp))
+            .border(1.dp, Color.White.copy(alpha = if (enabled) 0.25f else 0.1f), shape)
             .clickable(
                 interactionSource = interaction,
                 indication = null,
@@ -125,15 +123,16 @@ fun Secondary3DButton(
     LaunchedEffect(pressed, enabled) {
         scale.animateTo(if (!enabled) 1f else if (pressed) 0.97f else 1f, spring(stiffness = 600f))
     }
+    val shape = RoundedCornerShape(20.dp)
     val elevation = if (pressed) 2.dp else 8.dp
 
     Box(
         modifier = modifier
             .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-            .shadow(elevation, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
+            .shadow(elevation, shape, spotColor = TertiaryAccent.copy(alpha = 0.15f))
+            .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+            .border(1.5.dp, TertiaryAccent.copy(alpha = 0.45f), shape)
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
             .defaultMinSize(minHeight = 52.dp),
         contentAlignment = Alignment.Center,
@@ -164,33 +163,33 @@ fun Chip3D(
     }
     val shape = RoundedCornerShape(16.dp)
     val bg = if (selected) {
-        Brush.linearGradient(listOf(PrimaryAccentLight, PrimaryAccent))
+        BrandGradients.chipSelected
     } else {
         Brush.linearGradient(
             listOf(
                 MaterialTheme.colorScheme.surface,
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                DarkSurfaceVariant,
             ),
         )
     }
     val elevation = when {
         !enabled -> 0.dp
-        selected && !pressed -> 10.dp
+        selected && !pressed -> 8.dp
         pressed -> 3.dp
-        else -> 6.dp
+        else -> 4.dp
     }
 
     Box(
         modifier = modifier
             .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-            .shadow(elevation, shape, spotColor = if (selected) PrimaryAccent.copy(0.4f) else Color.Gray.copy(0.2f))
+            .shadow(elevation, shape, spotColor = if (selected) TertiaryAccent.copy(0.35f) else Color.Black.copy(0.25f))
             .clip(shape)
             .background(bg)
             .then(
                 if (selected) {
-                    Modifier.border(1.dp, Color.White.copy(alpha = 0.4f), shape)
+                    Modifier.border(1.dp, Color.White.copy(alpha = 0.3f), shape)
                 } else {
-                    Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), shape)
+                    Modifier.border(1.dp, DarkOutline.copy(alpha = 0.8f), shape)
                 },
             )
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
@@ -234,15 +233,11 @@ fun Fab3D(
                 scaleX = pulse * pressScale.value
                 scaleY = pulse * pressScale.value
             }
-            .shadow(18.dp, CircleShape, spotColor = PrimaryAccent.copy(alpha = 0.55f))
+            .shadow(18.dp, CircleShape, spotColor = TertiaryAccent.copy(alpha = 0.55f))
             .size(size)
             .clip(CircleShape)
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(PrimaryAccentLight, PrimaryAccent, SecondaryAccent.copy(alpha = 0.9f)),
-                ),
-            )
-            .border(2.dp, Color.White.copy(alpha = 0.45f), CircleShape)
+            .background(BrandGradients.fabRadial)
+            .border(2.dp, Color.White.copy(alpha = 0.35f), CircleShape)
             .clickable(interactionSource = interaction, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -258,7 +253,7 @@ fun IconButton3D(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     size: Dp = 44.dp,
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -270,11 +265,11 @@ fun IconButton3D(
     Box(
         modifier = modifier
             .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-            .shadow(if (pressed) 2.dp else 8.dp, CircleShape)
+            .shadow(if (pressed) 2.dp else 6.dp, CircleShape, spotColor = Color.Black.copy(alpha = 0.35f))
             .size(size)
             .clip(CircleShape)
             .background(containerColor)
-            .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f), CircleShape)
+            .border(0.5.dp, DarkGlassBorder, CircleShape)
             .clickable(
                 interactionSource = interaction,
                 indication = null,
@@ -308,12 +303,73 @@ fun TextButton3D(
     Box(
         modifier = modifier
             .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-            .shadow(if (pressed) 1.dp else 6.dp, RoundedCornerShape(14.dp), spotColor = accent.copy(0.25f))
+            .shadow(if (pressed) 1.dp else 4.dp, RoundedCornerShape(14.dp), spotColor = accent.copy(0.2f))
             .clip(RoundedCornerShape(14.dp))
-            .background(accent.copy(alpha = 0.12f))
+            .background(accent.copy(alpha = 0.14f))
             .clickable(interactionSource = interaction, indication = null, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         Text(text, color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+fun GradientOutlineButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    leadingIcon: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
+) {
+    val shape = RoundedCornerShape(18.dp)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(pressed) {
+        scale.animateTo(if (pressed) 0.98f else 1f, spring(stiffness = 600f))
+    }
+
+    Box(
+        modifier = modifier
+            .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
+            .clip(shape)
+            .background(BrandGradients.bluePurpleHorizontal)
+            .padding(1.5.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+            )
+            .defaultMinSize(minHeight = 52.dp)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                leadingIcon?.let {
+                    Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+            trailingIcon?.let {
+                Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     }
 }

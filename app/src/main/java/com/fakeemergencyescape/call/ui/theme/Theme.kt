@@ -2,47 +2,47 @@ package com.fakeemergencyescape.call.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val LightColorScheme = lightColorScheme(
-    primary = PrimaryAccent,
+private val DarkColorScheme = darkColorScheme(
+    primary = TertiaryAccent,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD4F4FF),
-    onPrimaryContainer = AppTextAccent,
+    primaryContainer = Color(0xFF1E3A66),
+    onPrimaryContainer = PrimaryAccentLight,
     secondary = SecondaryAccent,
     onSecondary = Color.White,
-    tertiary = TertiaryAccent,
-    onTertiary = Color.White,
-    background = AppBackground,
-    onBackground = AppOnBackground,
-    surface = AppSurface,
-    onSurface = AppOnSurface,
-    surfaceVariant = AppSurfaceVariant,
-    onSurfaceVariant = AppOnSurfaceMuted,
-    outline = AppOutline,
-    error = Color(0xFFFF3B30),
+    secondaryContainer = Color(0xFF3D2560),
+    onSecondaryContainer = Color(0xFFE0C4FF),
+    tertiary = PrimaryAccent,
+    onTertiary = Color(0xFF001A24),
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceMuted,
+    outline = DarkOutline,
+    outlineVariant = Color(0xFF1F2A40),
+    error = Color(0xFFFF453A),
     onError = Color.White,
-    errorContainer = Color(0xFFFFE5E5),
-    onErrorContainer = Color(0xFF9B1C1C),
+    errorContainer = Color(0xFF5C1A18),
+    onErrorContainer = Color(0xFFFFDAD6),
 )
 
 @Composable
 fun FakeEmergencyEscapeCallTheme(
     content: @Composable () -> Unit,
 ) {
-    // App UI is designed for the light palette — keeps text readable on cards & gradient BG.
-    val colorScheme = LightColorScheme
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = DarkColorScheme,
         typography = Typography,
         shapes = AppShapes,
     ) {
         Surface(
-            color = colorScheme.background,
-            contentColor = colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground,
         ) {
             content()
         }

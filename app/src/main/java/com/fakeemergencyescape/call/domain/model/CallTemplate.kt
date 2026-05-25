@@ -5,4 +5,9 @@ data class CallTemplate(
     val category: String,
     val title: String,
     val message: String,
-)
+    val scriptJson: String,
+    val suggestedCallerName: String,
+) {
+    val script: CallScript? get() = CallScriptCodec.decode(scriptJson)
+    val scriptLineCount: Int get() = script?.lineCount ?: 1
+}

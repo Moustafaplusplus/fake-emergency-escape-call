@@ -14,6 +14,9 @@ interface TemplateDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(templates: List<TemplateEntity>)
 
+    @Query("DELETE FROM templates")
+    suspend fun deleteAll()
+
     @Query("SELECT * FROM templates ORDER BY category, title")
     fun observeAll(): Flow<List<TemplateEntity>>
 }

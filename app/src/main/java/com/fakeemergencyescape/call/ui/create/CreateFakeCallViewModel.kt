@@ -34,6 +34,7 @@ data class CreateFakeCallUiState(
     val isRecording: Boolean = false,
     val recordingElapsedSec: Int = 0,
     val isPlayingPreview: Boolean = false,
+    val scriptJson: String? = null,
     val scheduleOption: ScheduleOption = ScheduleOption.MIN_5,
     val customTimeMillis: Long = System.currentTimeMillis() + 3600_000,
     val vibrationEnabled: Boolean = true,
@@ -89,6 +90,7 @@ class CreateFakeCallViewModel @Inject constructor(
                         it.copy(
                             callerName = call.callerName,
                             message = call.message,
+                            scriptJson = call.scriptJson,
                             messageType = call.messageType,
                             voiceMessagePath = call.voiceMessageUri,
                             customTimeMillis = call.scheduledAtMillis,
@@ -101,6 +103,7 @@ class CreateFakeCallViewModel @Inject constructor(
                                 call.messageType,
                                 call.message,
                                 call.voiceMessageUri,
+                                call.scriptJson,
                             ) && call.callerName.isNotBlank(),
                             errorMessage = if (readOnly) {
                                 "This call is ringing — wait until it ends before editing."
@@ -130,6 +133,7 @@ class CreateFakeCallViewModel @Inject constructor(
                         it.copy(
                             callerName = call.callerName,
                             message = messageText,
+                            scriptJson = if (call.messageType == MessageType.TEXT) call.scriptJson else null,
                             messageType = call.messageType,
                             voiceMessagePath = voicePath,
                             scheduleOption = ScheduleOption.MIN_5,
@@ -146,6 +150,7 @@ class CreateFakeCallViewModel @Inject constructor(
                                 call.messageType,
                                 messageText,
                                 voicePath,
+                                if (call.messageType == MessageType.TEXT) call.scriptJson else null,
                             ),
                             snackbarMessage = if (call.messageType == MessageType.VOICE && voicePath == null) {
                                 DUPLICATE_VOICE_COPY_FAILED
@@ -168,7 +173,7 @@ class CreateFakeCallViewModel @Inject constructor(
     }
 
     fun onCallerNameChange(value: String) = updateForm { it.copy(callerName = value) }
-    fun onMessageChange(value: String) = updateForm { it.copy(message = value) }
+    fun onMessageChange(value: String) = updateForm { it.copy(message = value, scriptJson = null) }
 
     fun onMessageTypeChange(type: MessageType) {
         updateForm { current ->
@@ -176,7 +181,7 @@ class CreateFakeCallViewModel @Inject constructor(
                 voiceMessagePlayer.stop()
                 current.copy(messageType = type)
             } else {
-                current.copy(messageType = type)
+                current.copy(messageType = type, scriptJson = null)
             }
         }
     }
@@ -246,7 +251,15 @@ class CreateFakeCallViewModel @Inject constructor(
     fun onCustomTimeChange(millis: Long) = updateForm { it.copy(customTimeMillis = millis, scheduleOption = ScheduleOption.CUSTOM) }
     fun onVibrationChange(enabled: Boolean) = updateForm { it.copy(vibrationEnabled = enabled) }
     fun onVibrateOnlyChange(enabled: Boolean) = updateForm { it.copy(vibrateOnly = enabled) }
-    fun onTemplateSelected(template: CallTemplate) = updateForm { it.copy(message = template.message) }
+    fun onClearScript() = updateForm { it.copy(scriptJson = null, message = "") }
+
+    fun onTemplateSelected(template: CallTemplate) = updateForm { current ->
+        current.copy(
+            message = template.message,
+            scriptJson = template.scriptJson.takeIf { it.isNotBlank() },
+            callerName = if (current.callerName.isBlank()) template.suggestedCallerName else current.callerName,
+        )
+    }
     fun clearSaveSuccess() = _uiState.update { it.copy(saveSuccess = false) }
     fun clearSnackbarMessage() = _uiState.update { it.copy(snackbarMessage = null) }
 
@@ -304,13 +317,22 @@ class CreateFakeCallViewModel @Inject constructor(
             java.util.Locale.getDefault().toLanguageTag()
         }
         val displayMessage = when (state.messageType) {
-            MessageType.TEXT -> state.message
+            MessageType.TEXT -> {
+                when {
+                    state.message.isNotBlank() -> state.message
+                    !state.scriptJson.isNullOrBlank() ->
+                        com.fakeemergencyescape.call.domain.model.CallScriptCodec
+                            .decode(state.scriptJson)?.lines?.firstOrNull()?.text.orEmpty()
+                    else -> ""
+                }
+            }
             MessageType.VOICE -> state.message.ifBlank { VOICE_MESSAGE_LABEL }
         }
         repository.scheduleCall(
             callerName = state.callerName,
             message = displayMessage,
             messageType = state.messageType,
+            scriptJson = state.scriptJson,
             voiceMessagePath = state.voiceMessagePath,
             scheduledAtMillis = scheduledAtMillis,
             vibrationEnabled = state.vibrationEnabled,
@@ -331,6 +353,7 @@ class CreateFakeCallViewModel @Inject constructor(
                     next.messageType,
                     next.message,
                     next.voiceMessagePath,
+                    next.scriptJson,
                 ),
                 errorMessage = null,
             )
@@ -341,13 +364,15 @@ class CreateFakeCallViewModel @Inject constructor(
         messageType: MessageType,
         message: String,
         voicePath: String?,
+        scriptJson: String? = null,
     ): Boolean = when (messageType) {
-        MessageType.TEXT -> message.isNotBlank()
+        MessageType.TEXT -> message.isNotBlank() || !scriptJson.isNullOrBlank()
         MessageType.VOICE -> voiceMessageStorage.exists(voicePath)
     }
 
     private fun isFormValid(state: CreateFakeCallUiState): Boolean =
-        state.callerName.isNotBlank() && hasValidMessage(state.messageType, state.message, state.voiceMessagePath)
+        state.callerName.isNotBlank() &&
+            hasValidMessage(state.messageType, state.message, state.voiceMessagePath, state.scriptJson)
 
     private fun validationError(state: CreateFakeCallUiState): String = when {
         state.callerName.isBlank() -> "Enter caller name"

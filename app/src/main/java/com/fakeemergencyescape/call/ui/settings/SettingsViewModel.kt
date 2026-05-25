@@ -108,7 +108,7 @@ class SettingsViewModel @Inject constructor(
             callAudioRouter.enterCallMode(speakerOn = false)
             textToSpeechManager.initialize { ready ->
                 if (!ready) {
-                    _previewMessage.value = "Speech not available. Install Google Text-to-speech."
+                    _previewMessage.value = "Speech not available. Check your device speech settings or install a speech app from the Play Store."
                     _isPreviewing.value = false
                     callAudioRouter.exitCallMode()
                     return@initialize

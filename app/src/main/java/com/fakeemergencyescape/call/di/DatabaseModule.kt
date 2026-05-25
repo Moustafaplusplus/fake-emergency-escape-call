@@ -6,6 +6,7 @@ import com.fakeemergencyescape.call.data.local.CallHistoryDao
 import com.fakeemergencyescape.call.data.local.FakeCallDao
 import com.fakeemergencyescape.call.data.local.FakeCallDatabase
 import com.fakeemergencyescape.call.data.local.MIGRATION_1_2
+import com.fakeemergencyescape.call.data.local.MIGRATION_2_3
 import com.fakeemergencyescape.call.data.local.TemplateDao
 import dagger.Module
 import dagger.Provides
@@ -26,7 +27,7 @@ object DatabaseModule {
             FakeCallDatabase::class.java,
             "fake_call_database",
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
 
     @Provides

@@ -11,7 +11,7 @@ import androidx.room.TypeConverters
         CallHistoryEntity::class,
         SavedCallerEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(CallStatusConverter::class, MessageTypeConverter::class)

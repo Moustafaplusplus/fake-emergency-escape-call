@@ -30,9 +30,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import com.fakeemergencyescape.call.ui.theme.GlassBorder
+import com.fakeemergencyescape.call.ui.theme.BrandGradients
+import com.fakeemergencyescape.call.ui.theme.DarkGlassBorder
+import com.fakeemergencyescape.call.ui.theme.DarkSurfaceElevated
+import com.fakeemergencyescape.call.ui.theme.SecondaryAccent
+import com.fakeemergencyescape.call.ui.theme.TertiaryAccent
 
-private val CardShape = RoundedCornerShape(24.dp)
+private val CardShape = RoundedCornerShape(20.dp)
 
 @Composable
 fun ElevatedAppCard(
@@ -50,13 +54,13 @@ fun ElevatedAppCard(
         )
     }
     val elevation = when {
-        pressed && onClick != null -> 6.dp
-        else -> 16.dp
+        pressed && onClick != null -> 4.dp
+        else -> 12.dp
     }
     val cardBrush = Brush.verticalGradient(
         colors = listOf(
+            DarkSurfaceElevated,
             MaterialTheme.colorScheme.surface,
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
         ),
     )
 
@@ -69,20 +73,15 @@ fun ElevatedAppCard(
             .shadow(
                 elevation = elevation,
                 shape = CardShape,
-                ambientColor = Color.Black.copy(alpha = 0.12f),
-                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                ambientColor = Color.Black.copy(alpha = 0.45f),
+                spotColor = TertiaryAccent.copy(alpha = 0.2f),
             )
             .clip(CardShape)
             .background(cardBrush)
-            .border(1.dp, GlassBorder, CardShape)
+            .border(1.dp, DarkGlassBorder, CardShape)
             .border(
                 width = 1.dp,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.7f),
-                        Color.Transparent,
-                    ),
-                ),
+                brush = BrandGradients.cardSheen,
                 shape = CardShape,
             )
             .then(
@@ -107,32 +106,22 @@ fun AppScreenBackground(modifier: Modifier = Modifier, content: @Composable () -
     val drift by infinite.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(8000, easing = LinearEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(10000, easing = LinearEasing), RepeatMode.Reverse),
         label = "drift",
     )
-    val primary = MaterialTheme.colorScheme.primary
-    val tertiary = MaterialTheme.colorScheme.tertiary
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.background.copy(alpha = 0.92f),
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
-                    ),
-                ),
-            ),
+            .background(BrandGradients.screenBackground),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { translationX = -40f + drift * 80f }
+                .graphicsLayer { translationX = -60f + drift * 120f; translationY = -40f }
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(primary.copy(alpha = 0.08f), Color.Transparent),
+                        colors = listOf(TertiaryAccent.copy(alpha = 0.18f), Color.Transparent),
                         radius = 900f,
                     ),
                 ),
@@ -140,11 +129,11 @@ fun AppScreenBackground(modifier: Modifier = Modifier, content: @Composable () -
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { translationX = 60f - drift * 100f; translationY = 120f }
+                .graphicsLayer { translationX = 80f - drift * 140f; translationY = 200f }
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(tertiary.copy(alpha = 0.06f), Color.Transparent),
-                        radius = 700f,
+                        colors = listOf(SecondaryAccent.copy(alpha = 0.14f), Color.Transparent),
+                        radius = 750f,
                     ),
                 ),
         )

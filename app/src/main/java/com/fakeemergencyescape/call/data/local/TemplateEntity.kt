@@ -9,4 +9,6 @@ data class TemplateEntity(
     val category: String,
     val title: String,
     val message: String,
+    val scriptJson: String,
+    val suggestedCallerName: String,
 )

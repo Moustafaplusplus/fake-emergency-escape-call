@@ -18,6 +18,7 @@ import com.fakeemergencyescape.call.domain.audio.VoiceMessagePlayer
 import com.fakeemergencyescape.call.domain.audio.VoiceMessageStorage
 import com.fakeemergencyescape.call.domain.model.CallStatus
 import com.fakeemergencyescape.call.domain.model.FakeCall
+import com.fakeemergencyescape.call.domain.model.CallScriptCodec
 import com.fakeemergencyescape.call.domain.model.MessageType
 import com.fakeemergencyescape.call.navigation.Routes
 import com.fakeemergencyescape.call.notifications.CallNotificationManager
@@ -302,7 +303,7 @@ class IncomingCallViewModel @Inject constructor(
 
     private suspend fun playTextMessage(call: FakeCall) {
         val text = call.message.ifBlank { _uiState.value.message }
-        if (text.isBlank()) return
+        if (text.isBlank() && call.scriptJson.isNullOrBlank()) return
         val ready = kotlinx.coroutines.suspendCancellableCoroutine { cont ->
             textToSpeechManager.initialize { success ->
                 cont.resume(success) {}
@@ -310,17 +311,28 @@ class IncomingCallViewModel @Inject constructor(
         }
         if (!ready) {
             _uiState.update {
-                it.copy(ttsError = "Speech not available. Install Google Text-to-speech from Play Store.")
+                it.copy(ttsError = "Speech not available. Check your device speech settings or install a speech app from the Play Store.")
             }
             return
         }
         _uiState.update { it.copy(ttsError = null) }
-        textToSpeechManager.speak(
-            text = text,
-            locale = parseLocale(call.voiceLocale),
-            rate = call.speechRate,
-            pitch = call.pitch,
-        )
+        val locale = parseLocale(call.voiceLocale)
+        val script = CallScriptCodec.decode(call.scriptJson)
+        if (script != null) {
+            textToSpeechManager.speakSequence(
+                lines = script.lines,
+                locale = locale,
+                rate = call.speechRate,
+                pitch = call.pitch,
+            )
+        } else {
+            textToSpeechManager.speak(
+                text = text,
+                locale = locale,
+                rate = call.speechRate,
+                pitch = call.pitch,
+            )
+        }
     }
 
     private fun stopMessagePlayback() {

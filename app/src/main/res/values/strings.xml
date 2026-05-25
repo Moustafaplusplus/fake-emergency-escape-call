@@ -10,9 +10,9 @@
     <string name="caller_name_label">Caller name</string>
     <string name="caller_name_hint">Who should appear to be calling?</string>
     <string name="message_label">Message after answer</string>
-    <string name="message_hint">Spoken when you tap Answer</string>
+    <string name="message_hint">Type the message that will be played after they answer…</string>
     <string name="message_type_label">Message type</string>
-    <string name="message_type_text">Text (TTS)</string>
+    <string name="message_type_text">Spoken text</string>
     <string name="message_type_voice">Voice recording</string>
     <string name="voice_message_hint">Record what should play after you answer. Uses your microphone.</string>
     <string name="voice_start_recording">Start recording</string>
@@ -30,6 +30,7 @@
     <string name="schedule_5m">5 min</string>
     <string name="schedule_15m">15 min</string>
     <string name="schedule_custom">Custom</string>
+    <string name="vibration_section_label">Vibration</string>
     <string name="vibration_enabled">Vibrate while ringing</string>
     <string name="vibrate_only">Vibrate only (no ringtone)</string>
     <string name="schedule_button">Schedule call</string>
@@ -41,6 +42,12 @@
     <string name="save_changes_button">Save changes</string>
     <string name="template_picker_title">Message templates</string>
     <string name="template_picker_button">Choose a template</string>
+    <string name="template_script_line_count">%1$d-part conversation with pauses</string>
+    <string name="template_quick_pick_label">Templates</string>
+    <string name="template_view_all">View all</string>
+    <string name="script_conversation_label">Conversation script</string>
+    <string name="script_pause_label">Pause %1$s — time to respond</string>
+    <string name="script_write_custom">Write a custom message instead</string>
     <string name="section_upcoming">Upcoming</string>
     <string name="section_past">Past</string>
     <string name="cancel_call_title">Cancel scheduled call?</string>
@@ -118,7 +125,7 @@
     <string name="about_ui_notice">Call screens look like a real phone for realism. This app is not your system Phone app or affiliated with your carrier.</string>
     <string name="about_version">Version %1$s (%2$d)</string>
     <string name="about_no_telephony">No cellular dialer, VoIP, or emergency routing is used.</string>
-    <string name="about_voice_messages">You can use typed text (spoken with TTS) or record a voice message that plays after you answer.</string>
+    <string name="about_voice_messages">You can type a message that is read aloud, or record a voice message that plays after you answer.</string>
     <string name="privacy_title">Privacy</string>
     <string name="privacy_body">Data stays on your device. No account or cloud sync.</string>
     <string name="privacy_local_only">Scheduled calls, text, voice recordings, templates, and settings are stored locally on your phone.</string>

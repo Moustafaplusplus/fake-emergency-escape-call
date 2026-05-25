@@ -14,3 +14,7 @@ output/
 .jdk/
 *.hprof
 *.log
+
+# Release signing (never commit)
+keystore/*.keystore
+keystore/keystore.properties

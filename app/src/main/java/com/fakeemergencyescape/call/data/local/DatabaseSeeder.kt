@@ -8,8 +8,7 @@ class DatabaseSeeder @Inject constructor(
     private val templateDao: TemplateDao,
 ) {
     suspend fun seedTemplatesIfNeeded() {
-        if (templateDao.count() == 0) {
-            templateDao.insertAll(TemplateSeedData.all())
-        }
+        templateDao.deleteAll()
+        templateDao.insertAll(TemplateSeedData.all())
     }
 }

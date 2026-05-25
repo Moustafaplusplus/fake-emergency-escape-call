@@ -8,17 +8,20 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -49,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -66,10 +71,12 @@ import com.fakeemergencyescape.call.ui.components.Fab3D
 import com.fakeemergencyescape.call.ui.components.IconButton3D
 import com.fakeemergencyescape.call.ui.components.Primary3DButton
 import com.fakeemergencyescape.call.ui.components.TextButton3D
+import com.fakeemergencyescape.call.ui.components.SectionLabel
 import com.fakeemergencyescape.call.ui.components.staggeredEntrance
-import com.fakeemergencyescape.call.ui.theme.CallAnswerGreen
-import com.fakeemergencyescape.call.ui.theme.PrimaryAccent
-import com.fakeemergencyescape.call.ui.theme.PrimaryAccentDark
+import com.fakeemergencyescape.call.ui.theme.SecondaryAccent
+import com.fakeemergencyescape.call.ui.theme.StatusCompleted
+import com.fakeemergencyescape.call.ui.theme.StatusDeclined
+import com.fakeemergencyescape.call.ui.theme.TertiaryAccent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -141,7 +148,8 @@ fun HomeScreen(
                     title = {
                         Text(
                             stringResource(R.string.home_title),
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.headlineSmall,
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -183,7 +191,7 @@ fun HomeScreen(
                             title = stringResource(R.string.home_call_appearance_title),
                             subtitle = stringResource(R.string.home_call_appearance_subtitle),
                             icon = Icons.Default.Palette,
-                            iconGradient = listOf(PrimaryAccent, PrimaryAccentDark),
+                            iconGradient = listOf(TertiaryAccent, SecondaryAccent),
                             onClick = onCallAppearance,
                             modifier = Modifier.weight(1f),
                         )
@@ -191,7 +199,7 @@ fun HomeScreen(
                             title = stringResource(R.string.home_active_appearance_title),
                             subtitle = stringResource(R.string.home_active_appearance_subtitle),
                             icon = Icons.Default.PhoneInTalk,
-                            iconGradient = listOf(CallAnswerGreen, CallAnswerGreen.copy(alpha = 0.75f)),
+                            iconGradient = listOf(TertiaryAccent, SecondaryAccent.copy(alpha = 0.85f)),
                             onClick = onActiveCallAppearance,
                             modifier = Modifier.weight(1f),
                         )
@@ -210,12 +218,9 @@ fun HomeScreen(
                 } else {
                     if (uiState.scheduledCalls.isNotEmpty()) {
                         item {
-                            Text(
+                            SectionLabel(
                                 text = stringResource(R.string.section_upcoming),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                                modifier = Modifier.padding(top = 8.dp),
                             )
                         }
                         itemsIndexed(uiState.scheduledCalls, key = { _, call -> call.id }) { index, call ->
@@ -234,12 +239,9 @@ fun HomeScreen(
                     }
                     if (uiState.pastCalls.isNotEmpty()) {
                         item {
-                            Text(
+                            SectionLabel(
                                 text = stringResource(R.string.section_past),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                                modifier = Modifier.padding(top = 12.dp),
                             )
                         }
                         itemsIndexed(
@@ -346,68 +348,101 @@ private fun FakeCallCard(
         MessageType.VOICE -> stringResource(R.string.message_type_voice)
         MessageType.TEXT -> call.message
     }
+    val statusColor = when (call.status) {
+        CallStatus.COMPLETED -> StatusCompleted
+        CallStatus.DECLINED -> StatusDeclined
+        CallStatus.MISSED -> StatusDeclined
+        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+    val avatarGradient = callAvatarGradient(call.id)
     ElevatedAppCard(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick,
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(avatarGradient)),
+                contentAlignment = Alignment.Center,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = call.callerName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = messagePreview,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
-                    Text(
-                        text = scheduledLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 10.dp),
-                    )
-                    Text(
-                        text = statusLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 6.dp),
+                Icon(
+                    imageVector = Icons.Default.Phone,
+                    contentDescription = null,
+                    tint = androidx.compose.ui.graphics.Color.White,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = call.callerName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = messagePreview,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    text = scheduledLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(
+                    text = statusLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = statusColor,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (showCancel && call.status == CallStatus.SCHEDULED) {
+                    TextButton3D(
+                        text = stringResource(R.string.cancel_call_action),
+                        onClick = onCancel,
+                        accent = MaterialTheme.colorScheme.error,
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (showCancel && call.status == CallStatus.SCHEDULED) {
-                        TextButton3D(
-                            text = stringResource(R.string.cancel_call_action),
-                            onClick = onCancel,
-                            accent = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     IconButton3D(
                         icon = Icons.Default.ContentCopy,
                         contentDescription = stringResource(R.string.duplicate_call_action),
                         onClick = onDuplicate,
-                        size = 42.dp,
+                        size = 40.dp,
                     )
                     IconButton3D(
                         icon = Icons.Default.Delete,
                         contentDescription = stringResource(R.string.delete_call_action),
                         onClick = onDelete,
                         tint = MaterialTheme.colorScheme.error,
-                        size = 42.dp,
+                        size = 40.dp,
                     )
                 }
             }
         }
     }
+}
+
+private fun callAvatarGradient(callId: String): List<androidx.compose.ui.graphics.Color> {
+    val palettes = listOf(
+        listOf(TertiaryAccent, SecondaryAccent),
+        listOf(SecondaryAccent, TertiaryAccent),
+        listOf(TertiaryAccent, TertiaryAccent.copy(alpha = 0.7f)),
+        listOf(SecondaryAccent, SecondaryAccent.copy(alpha = 0.75f)),
+    )
+    return palettes[callId.hashCode().mod(palettes.size).let { if (it < 0) it + palettes.size else it }]
 }
 
 private fun formatScheduleTime(millis: Long): String =

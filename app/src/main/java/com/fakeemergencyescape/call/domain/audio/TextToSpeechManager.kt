@@ -6,12 +6,16 @@ import android.os.Build
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.fakeemergencyescape.call.domain.model.CallScriptLine
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 enum class TtsState {
     IDLE,
@@ -102,6 +106,33 @@ class TextToSpeechManager @Inject constructor(
         engine.setSpeechRate(rate)
         engine.setPitch(pitch)
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID)
+    }
+
+    suspend fun speakSequence(
+        lines: List<CallScriptLine>,
+        locale: Locale,
+        rate: Float,
+        pitch: Float,
+    ) {
+        for ((index, line) in lines.withIndex()) {
+            if (line.text.isBlank()) continue
+            suspendCancellableCoroutine { cont ->
+                speak(
+                    text = line.text,
+                    locale = locale,
+                    rate = rate,
+                    pitch = pitch,
+                    onDone = {
+                        if (cont.isActive) cont.resume(Unit) {}
+                    },
+                )
+                cont.invokeOnCancellation { stop() }
+            }
+            val isLastLine = index == lines.lastIndex
+            if (!isLastLine && line.pauseAfterMs > 0) {
+                delay(line.pauseAfterMs)
+            }
+        }
     }
 
     fun stop() {
